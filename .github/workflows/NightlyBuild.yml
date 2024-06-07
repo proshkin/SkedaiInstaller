@@ -1,0 +1,50 @@
+name: Nightly Build Attempt
+
+on:
+  schedule:
+    - cron: '0 5 * * *' # 5:oo AM UTC, 10:00 PM PST
+
+jobs:
+  fetch-artifact:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout this repository
+        uses: actions/checkout@v4
+
+      - name: Get version number from latest ModSatRunner # this will be used for other components, which is why we need the version number
+        id: fetch-version
+        run: |
+          ARTIFACTS=$(curl -s -H "Authorization: token ${{ secrets.GH_TOKEN }}" \
+            "https://api.github.com/repos/proshkin/SkedaiSatRunner/actions/artifacts" \
+            | jq '.artifacts')
+          LATEST_ARTIFACT=$(echo "$ARTIFACTS" | jq -r '.[0]')
+          ARTIFACT_NAME=$(echo "$LATEST_ARTIFACT" | jq -r '.name')
+          VERSION=$(echo "$ARTIFACT_NAME" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+$')
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+      - name: Get latest ModSatRunner
+        id: download-modsatrunner
+        run: |
+          VERSION=${{ env.VERSION }}
+          ARTIFACTS=$(curl -s -H "Authorization: token ${{ secrets.GH_TOKEN }}" \
+            "https://api.github.com/repos/proshkin/SkedaiSatRunner/actions/artifacts" \
+            | jq '.artifacts')
+
+          MATCHING_ARTIFACT=$(echo "$ARTIFACTS" | jq -r --arg VERSION "_win$VERSION" '.[] | select(.name | endswith($VERSION))')
+          ARTIFACT_ID=$(echo "$MATCHING_ARTIFACT" | jq -r '.id')
+          
+          if [ -z "$ARTIFACT_ID" ]; then
+            echo "No matching artifact found for version $VERSION"
+            exit 1
+          fi
+
+          curl -L -H "Authorization: token ${{ secrets.GH_TOKEN }}" \
+            -o artifact.zip \
+            "https://api.github.com/repos/proskin/SkedaiSatRunner/actions/artifacts/$ARTIFACT_ID/zip"
+          
+          ARTIFACT_DIR="components"
+          mkdir -p $ARTIFACT_DIR
+          unzip artifact.zip -d $ARTIFACT_DIR
+
+          echo "ARTIFACT_DIR=$ARTIFACT_DIR" >> $GITHUB_ENV
+          echo "ARTIFACT_NAME=$ARTIFACT_NAME" >> $GITHUB_ENV
