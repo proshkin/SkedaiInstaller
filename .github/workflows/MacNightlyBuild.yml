@@ -1,0 +1,91 @@
+name: Mac Nightly Build Attempt
+
+on:
+  schedule:
+    - cron: '0 5 * * *' # 5:00 AM UTC, 10:00 PM PST
+
+jobs:
+  fetch-and-use-artifact:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout this repository
+        uses: actions/checkout@v4
+
+      - name: Get version number from latest ModSatRunner
+        id: fetch-version
+        run: |
+          artifacts=$(curl -s -H "Authorization: token ${{ secrets.GH_TOKEN }}" "https://api.github.com/repos/proshkin/SkedaiSatRunner/actions/artifacts")
+          latestArtifact=$(echo "$artifacts" | jq -r '.artifacts[0]')
+          artifactName=$(echo "$latestArtifact" | jq -r '.name')
+          version=$(echo "$artifactName" | grep -oE '\d+\.\d+\.\d+$')
+          echo "VERSION=$version" >> $GITHUB_ENV
+        shell: bash
+
+
+      - name: Get latest ModSatRunner using version number
+        id: download-modsatrunner
+        run: |
+          version=${{ env.VERSION }}
+          artifacts=$(curl -s -H "Authorization: token ${{ secrets.GH_TOKEN }}" "https://api.github.com/repos/proshkin/SkedaiSatRunner/actions/artifacts")
+          matchingArtifact=$(echo "$artifacts" | jq -r --arg VERSION "_mac$version" '.artifacts[] | select(.name | endswith($VERSION))')
+          artifactId=$(echo "$matchingArtifact" | jq -r '.id')
+          
+          if [ -z "$artifactId" ]; then
+            echo "No matching artifact found for version $version"
+            exit 1
+          fi
+
+          curl -L -H "Authorization: token ${{ secrets.GH_TOKEN }}" -o artifact.zip "https://api.github.com/repos/proshkin/SkedaiSatRunner/actions/artifacts/$artifactId/zip"
+          artifactDir="components"
+          mkdir -p $artifactDir
+          unzip artifact.zip -d $artifactDir
+        shell: bash
+
+
+      - name: Get latest Authenticator using version number
+        id: download-authenticator
+        run: |
+          version=${{ env.VERSION }}
+          artifacts=$(curl -s -H "Authorization: token ${{ secrets.GH_TOKEN }}" "https://api.github.com/repos/proshkin/SkedaiAuthenticator/actions/artifacts")
+          matchingArtifact=$(echo "$artifacts" | jq -r --arg VERSION "_mac$version" '.artifacts[] | select(.name | endswith($VERSION))')
+          artifactId=$(echo "$matchingArtifact" | jq -r '.id')
+          
+          if [ -z "$artifactId" ]; then
+            echo "No matching artifact found for version $version"
+            exit 1
+          fi
+
+          curl -L -H "Authorization: token ${{ secrets.GH_TOKEN }}" -o artifact.zip "https://api.github.com/repos/proshkin/SkedaiAuthenticator/actions/artifacts/$artifactId/zip"
+          artifactDir="components"
+          mkdir -p $artifactDir
+          unzip artifact.zip -d $artifactDir
+        shell: bash
+
+
+      - name: Get latest UserServer using version number
+        id: download-server
+        run: |
+          version=${{ env.VERSION }}
+          artifacts=$(curl -s -H "Authorization: token ${{ secrets.GH_TOKEN }}" "https://api.github.com/repos/proshkin/SkedaiUserServer/actions/artifacts")
+          matchingArtifact=$(echo "$artifacts" | jq -r --arg VERSION "_mac$version" '.artifacts[] | select(.name | endswith($VERSION))')
+          artifactId=$(echo "$matchingArtifact" | jq -r '.id')
+          
+          if [ -z "$artifactId" ]; then
+            echo "No matching artifact found for version $version"
+            exit 1
+          fi
+
+          curl -L -H "Authorization: token ${{ secrets.GH_TOKEN }}" -o artifact.zip "https://api.github.com/repos/proshkin/SkedaiUserServer/actions/artifacts/$artifactId/zip"
+          artifactDir="components"
+          mkdir -p $artifactDir
+          unzip artifact.zip -d $artifactDir
+
+          exePattern="userServer_mac*.exe"
+          exeFile=$(find $artifactDir -name "$exePattern" | head -n 1)
+          if [ -n "$exeFile" ]; then
+            mv "$exeFile" "$artifactDir/main.exe"
+          else
+            echo "No executable file matching the pattern '$exePattern' found in the extracted artifacts."
+            exit 1
+          fi
+        shell: bash
