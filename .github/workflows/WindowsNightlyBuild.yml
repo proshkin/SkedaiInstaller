@@ -1,50 +1,136 @@
-name: Nightly Build Attempt
+name: Windows Nightly Build Attempt
 
 on:
   schedule:
-    - cron: '0 5 * * *' # 5:oo AM UTC, 10:00 PM PST
+    - cron: '0 5 * * *' # 5:00 AM UTC, 10:00 PM PST
 
 jobs:
-  fetch-artifact:
-    runs-on: ubuntu-latest
+  fetch-and-use-artifact:
+    runs-on: windows-latest
     steps:
       - name: Checkout this repository
         uses: actions/checkout@v4
 
-      - name: Get version number from latest ModSatRunner # this will be used for other components, which is why we need the version number
+      - name: Get version number from latest ModSatRunner
         id: fetch-version
         run: |
-          ARTIFACTS=$(curl -s -H "Authorization: token ${{ secrets.GH_TOKEN }}" \
-            "https://api.github.com/repos/proshkin/SkedaiSatRunner/actions/artifacts" \
-            | jq '.artifacts')
-          LATEST_ARTIFACT=$(echo "$ARTIFACTS" | jq -r '.[0]')
-          ARTIFACT_NAME=$(echo "$LATEST_ARTIFACT" | jq -r '.name')
-          VERSION=$(echo "$ARTIFACT_NAME" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+$')
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          $artifacts = Invoke-RestMethod -Uri "https://api.github.com/repos/proshkin/SkedaiSatRunner/actions/artifacts" -Headers @{Authorization = "token $env:GH_TOKEN"}
+          $latestArtifact = $artifacts.artifacts[0]
+          $artifactName = $latestArtifact.name
+          $version = $artifactName -match '\d+\.\d+\.\d+$' | Out-Null; $matches[0]
+          echo "VERSION=$version" >> $env:GITHUB_ENV
+        shell: powershell
 
-      - name: Get latest ModSatRunner
+
+
+      - name: Get latest ModSatRunner using version number
         id: download-modsatrunner
         run: |
-          VERSION=${{ env.VERSION }}
-          ARTIFACTS=$(curl -s -H "Authorization: token ${{ secrets.GH_TOKEN }}" \
-            "https://api.github.com/repos/proshkin/SkedaiSatRunner/actions/artifacts" \
-            | jq '.artifacts')
-
-          MATCHING_ARTIFACT=$(echo "$ARTIFACTS" | jq -r --arg VERSION "_win$VERSION" '.[] | select(.name | endswith($VERSION))')
-          ARTIFACT_ID=$(echo "$MATCHING_ARTIFACT" | jq -r '.id')
+          $version = $env:VERSION
+          $artifacts = Invoke-RestMethod -Uri "https://api.github.com/repos/proshkin/SkedaiSatRunner/actions/artifacts" -Headers @{Authorization = "token $env:GH_TOKEN"}
+          $matchingArtifact = $artifacts.artifacts | Where-Object { $_.name -match "_win$version$" }
+          $artifactId = $matchingArtifact.id
           
-          if [ -z "$ARTIFACT_ID" ]; then
-            echo "No matching artifact found for version $VERSION"
+          if (-not $artifactId) {
+            Write-Error "No matching artifact found for version $version"
             exit 1
-          fi
+          }
 
-          curl -L -H "Authorization: token ${{ secrets.GH_TOKEN }}" \
-            -o artifact.zip \
-            "https://api.github.com/repos/proskin/SkedaiSatRunner/actions/artifacts/$ARTIFACT_ID/zip"
+          Invoke-RestMethod -Uri "https://api.github.com/repos/proshkin/SkedaiSatRunner/actions/artifacts/$artifactId/zip" -Headers @{Authorization = "token $env:GH_TOKEN"} -OutFile "artifact.zip"
           
-          ARTIFACT_DIR="components"
-          mkdir -p $ARTIFACT_DIR
-          unzip artifact.zip -d $ARTIFACT_DIR
+          $artifactDir = "components"
+          mkdir $artifactDir
+          tar -xf artifact.zip -C $artifactDir
+        shell: powershell
+      
 
-          echo "ARTIFACT_DIR=$ARTIFACT_DIR" >> $GITHUB_ENV
-          echo "ARTIFACT_NAME=$ARTIFACT_NAME" >> $GITHUB_ENV
+
+      - name: Get latest Authenticator using version number
+        id: download-authenticator
+        run: |
+          $version = $env:VERSION
+          $artifacts = Invoke-RestMethod -Uri "https://api.github.com/repos/proshkin/SkedaiAuthenticator/actions/artifacts" -Headers @{Authorization = "token $env:GH_TOKEN"}
+          $matchingArtifact = $artifacts.artifacts | Where-Object { $_.name -match "_win$version$" }
+          $artifactId = $matchingArtifact.id
+          
+          if (-not $artifactId) {
+            Write-Error "No matching artifact found for version $version"
+            exit 1
+          }
+
+          Invoke-RestMethod -Uri "https://api.github.com/repos/proshkin/SkedaiAuthenticator/actions/artifacts/$artifactId/zip" -Headers @{Authorization = "token $env:GH_TOKEN"} -OutFile "artifact.zip"
+          
+          $artifactDir = "components"
+          tar -xf artifact.zip -C $artifactDir
+        shell: powershell
+
+
+
+      - name: Get latest UserServer using version number
+        id: download-server
+        run: |
+          $version = $env:VERSION
+          $artifacts = Invoke-RestMethod -Uri "https://api.github.com/repos/proshkin/SkedaiUserServer/actions/artifacts" -Headers @{Authorization = "token $env:GH_TOKEN"}
+          $matchingArtifact = $artifacts.artifacts | Where-Object { $_.name -match "_win$version$" }
+          $artifactId = $matchingArtifact.id
+          
+          if (-not $artifactId) {
+            Write-Error "No matching artifact found for version $version"
+            exit 1
+          }
+
+          Invoke-RestMethod -Uri "https://api.github.com/repos/proshkin/SkedaiUserServer/actions/artifacts/$artifactId/zip" -Headers @{Authorization = "token $env:GH_TOKEN"} -OutFile "artifact.zip"
+          
+          $artifactDir = "components"
+          mkdir $artifactDir
+          tar -xf artifact.zip -C $artifactDir
+
+          $exePattern = "userServer_win*.exe"
+          $exeFile = Get-ChildItem -Path $artifactDir -Filter $exePattern | Select-Object -First 1
+          if ($exeFile) {
+            Rename-Item -Path $exeFile.FullName -NewName "$artifactDir\main.exe"
+          } else {
+            Write-Error "No executable file matching the pattern '$exePattern' found in the extracted artifacts."
+            exit 1
+          }
+        shell: powershell
+
+      
+
+      
+      - name: Install Inno Setup
+        if: env.INNO_SETUP_CHANGED == 'true'
+        run: |
+          choco install innosetup
+      
+      - name: Create version.txt
+        if: env.INNO_SETUP_CHANGED == 'true'
+        run: |
+          echo ${{ env.version_number }} > version.txt
+        shell: powershell
+
+      - name: Create token.txt
+        if: env.INNO_SETUP_CHANGED == 'true'
+        run: |
+          New-Item -ItemType File -Path token.txt -Force
+        shell: powershell
+
+      - name: Install NSSM
+        if: env.INNO_SETUP_CHANGED == 'true'
+        run: |
+          Invoke-WebRequest -Uri "https://nssm.cc/release/nssm-2.24.zip" -OutFile "nssm.zip"
+          Expand-Archive -Path "nssm.zip" -DestinationPath "nssm"
+        shell: powershell
+
+      - name: Compile Installer
+        if: env.INNO_SETUP_CHANGED == 'true'
+        run: |
+          "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" WindowsInnoSetupMain.iss
+        shell: cmd
+        
+      - name: Upload Installer as Artifact
+        if: env.INNO_SETUP_CHANGED == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-installer
+          path: Output\SkedAIUserServerInstaller.exe
