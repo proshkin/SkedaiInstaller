@@ -10,10 +10,10 @@ OutputDir=.\Output
 
 
 [Files]
-Source: "downloaded-artifacts\main.exe"; DestDir: "{app}"
-Source: "downloaded-artifacts\mod_sat_runner.exe"; DestDir: "{app}"
+Source: "components\main.exe"; DestDir: "{app}"
+Source: "components\mod_sat_runner.exe"; DestDir: "{app}"
 Source: "nssm\nssm-2.24\win64\nssm.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "downloaded-artifacts\SkedAuthenticator.exe"; DestDir: "{app}"
+Source: "components\SkedAuthenticator.exe"; DestDir: "{app}"
 Source: "version.txt"; DestDir: "{userappdata}\Node Server"; Flags: ignoreversion createallsubdirs recursesubdirs
 Source: "token.txt"; DestDir: "{userappdata}\Node Server"; Flags: ignoreversion createallsubdirs recursesubdirs
 
