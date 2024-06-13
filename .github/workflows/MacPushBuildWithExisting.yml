@@ -134,5 +134,5 @@ jobs:
       - name: Upload installer package as artifact
         uses: actions/upload-artifact@v4
         with:
-          name: userServerInstaller
+          name: userServerInstaller_mac${{ env.version }}
           path: userServerInstaller.pkg
