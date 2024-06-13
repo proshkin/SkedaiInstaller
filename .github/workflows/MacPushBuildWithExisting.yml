@@ -28,11 +28,10 @@ jobs:
           artifacts=$(curl -s -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" "https://api.github.com/repos/proshkin/SkedaiSatRunner/actions/artifacts")
           echo "Artifacts: $artifacts"
           
-          matchingArtifacts=$(echo "$artifacts" | jq -r --arg VERSION "_mac$version" '.artifacts[] | select(.name | endswith($VERSION))')
+          matchingArtifacts=$(echo "$artifacts" | jq -r --arg VERSION "_mac$version" '[.artifacts[] | select(.name | endswith($VERSION))]')
           echo "Matching Artifacts: $matchingArtifacts"
           
-          # Check if multiple artifacts match
-          artifactCount=$(echo "$matchingArtifacts" | jq -r 'length')
+          artifactCount=$(echo "$matchingArtifacts" | jq 'length')
           echo "Number of matching artifacts: $artifactCount"
           
           if [ "$artifactCount" -eq 0 ]; then
@@ -53,6 +52,7 @@ jobs:
           mkdir -p $artifactDir
           unzip artifact.zip -d $artifactDir
         shell: bash
+
 
       - name: Get latest Authenticator using version number
         id: download-authenticator
