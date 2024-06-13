@@ -23,16 +23,32 @@ jobs:
         id: download-modsatrunner
         run: |
           version=${{ env.version }}
-          artifacts=$(curl -s -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" "https://api.github.com/repos/proshkin/SkedaiSatRunner/actions/artifacts")
-          matchingArtifact=$(echo "$artifacts" | jq -r --arg VERSION "_mac$version" '.artifacts[] | select(.name | endswith($VERSION))')
-          artifactId=$(echo "$matchingArtifact" | jq -r '.id')
+          echo "Version: $version"
           
-          if [ -z "$artifactId" ]; then
+          artifacts=$(curl -s -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" "https://api.github.com/repos/proshkin/SkedaiSatRunner/actions/artifacts")
+          echo "Artifacts: $artifacts"
+          
+          matchingArtifacts=$(echo "$artifacts" | jq -r --arg VERSION "_mac$version" '.artifacts[] | select(.name | endswith($VERSION))')
+          echo "Matching Artifacts: $matchingArtifacts"
+          
+          # Check if multiple artifacts match
+          artifactCount=$(echo "$matchingArtifacts" | jq -r 'length')
+          echo "Number of matching artifacts: $artifactCount"
+          
+          if [ "$artifactCount" -eq 0 ]; then
             echo "No matching artifact found for version $version"
             exit 1
+          elif [ "$artifactCount" -gt 1 ]; then
+            echo "Multiple matching artifacts found. Using the first one."
           fi
 
-          curl -L -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" -o artifact.zip "https://api.github.com/repos/proshkin/SkedaiSatRunner/actions/artifacts/$artifactId/zip"
+          artifactId=$(echo "$matchingArtifacts" | jq -r '.[0].id')
+          echo "Selected Artifact ID: $artifactId"
+          
+          download_url="https://api.github.com/repos/proshkin/SkedaiSatRunner/actions/artifacts/$artifactId/zip"
+          echo "Download URL: $download_url"
+
+          curl -L -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" -o artifact.zip "$download_url"
           artifactDir="components"
           mkdir -p $artifactDir
           unzip artifact.zip -d $artifactDir
