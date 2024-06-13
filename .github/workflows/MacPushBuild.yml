@@ -23,8 +23,7 @@ jobs:
         id: download-userserver
         run: |
           version=${{ env.version }}
-          artifacts=$(curl -s -H "Authorization: token ${{ secrets.GH_TOKEN }}" "https://api.github.com/repos/proshkin/SkedaiUserServer/actions/artifacts")
-          echo "API Response: $artifacts"
+          artifacts=$(curl -s -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" "https://api.github.com/repos/proshkin/SkedaiUserServer/actions/artifacts")
           
           matchingArtifact=$(echo "$artifacts" | jq -r --arg VERSION "_mac$version" '.artifacts[] | select(.name | endswith($VERSION))')
           artifactId=$(echo "$matchingArtifact" | jq -r '.id')
@@ -34,7 +33,7 @@ jobs:
             exit 1
           fi
 
-          curl -L -H "Authorization: token ${{ secrets.GH_TOKEN }}" -o artifact.zip "https://api.github.com/repos/proshkin/SkedaiUserServer/actions/artifacts/$artifactId/zip"
+          curl -L -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" -o artifact.zip "https://api.github.com/repos/proshkin/SkedaiUserServer/actions/artifacts/$artifactId/zip"
           artifactDir="components"
           mkdir -p $artifactDir
           unzip artifact.zip -d $artifactDir
