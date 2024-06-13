@@ -25,14 +25,10 @@ jobs:
           version=${{ env.version }}
           echo "Version: $version"
           
-          artifacts=$(curl -s -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" "https://api.github.com/repos/proshkin/SkedaiSatRunner/actions/artifacts")
-          echo "Artifacts: $artifacts"
-          
+          artifacts=$(curl -s -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" "https://api.github.com/repos/proshkin/SkedaiSatRunner/actions/artifacts")          
           matchingArtifacts=$(echo "$artifacts" | jq -r --arg VERSION "_mac$version" '[.artifacts[] | select(.name | endswith($VERSION))]')
-          echo "Matching Artifacts: $matchingArtifacts"
           
           artifactCount=$(echo "$matchingArtifacts" | jq 'length')
-          echo "Number of matching artifacts: $artifactCount"
           
           if [ "$artifactCount" -eq 0 ]; then
             echo "No matching artifact found for version $version"
@@ -41,12 +37,8 @@ jobs:
             echo "Multiple matching artifacts found. Using the first one."
           fi
 
-          artifactId=$(echo "$matchingArtifacts" | jq -r '.[0].id')
-          echo "Selected Artifact ID: $artifactId"
-          
+          artifactId=$(echo "$matchingArtifacts" | jq -r '.[0].id')          
           download_url="https://api.github.com/repos/proshkin/SkedaiSatRunner/actions/artifacts/$artifactId/zip"
-          echo "Download URL: $download_url"
-
           curl -L -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" -o artifact.zip "$download_url"
           artifactDir="components"
           mkdir -p $artifactDir
