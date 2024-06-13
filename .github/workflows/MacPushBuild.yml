@@ -38,9 +38,13 @@ jobs:
           artifactDir="components"
           mkdir -p $artifactDir
           unzip artifact.zip -d $artifactDir
+          
+          # List the contents of the extracted files to verify the names
+          echo "Contents of $artifactDir:"
+          ls -l $artifactDir
 
-          # Assuming the specific executable has a predictable name pattern
-          exePattern="userServer_mac$version"
+          # Assuming the specific executable has a predictable name pattern without the version number
+          exePattern="userServer_mac"
           exeFile=$(find $artifactDir -name "$exePattern" | head -n 1)
           if [ -n "$exeFile" ]; then
             mv "$exeFile" "$artifactDir/userServer_mac"
