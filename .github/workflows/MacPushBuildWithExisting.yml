@@ -19,19 +19,18 @@ jobs:
           done < mainConfig.txt
         shell: bash
 
-      - name: Get latest ModSatRunner using version number
-        id: download-modsatrunner
+      - name: Get latest SkedaiSatRunner using version number
+        id: download-skedaisatrunner
         run: |
-          version=${{ env.version }}
-          echo "Version: $version"
+          skedaisatrunner_version=${{ env.skedaisatrunner_version }}
           
           artifacts=$(curl -s -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" "https://api.github.com/repos/proshkin/SkedaiSatRunner/actions/artifacts")          
-          matchingArtifacts=$(echo "$artifacts" | jq -r --arg VERSION "_mac$version" '[.artifacts[] | select(.name | endswith($VERSION))]')
+          matchingArtifacts=$(echo "$artifacts" | jq -r --arg version "_mac$skedaisatrunner_version" '[.artifacts[] | select(.name | endswith($version))]')
           
           artifactCount=$(echo "$matchingArtifacts" | jq 'length')
           
           if [ "$artifactCount" -eq 0 ]; then
-            echo "No matching artifact found for version $version"
+            echo "No matching artifact found for version $skedaisatrunner_version"
             exit 1
           elif [ "$artifactCount" -gt 1 ]; then
             echo "Multiple matching artifacts found. Using the first one."
@@ -48,16 +47,15 @@ jobs:
       - name: Get latest Authenticator using version number
         id: download-authenticator
         run: |
-          version=${{ env.version }}
-          echo "Version: $version"
+          authenticator_version=${{ env.authenticator_version }}
           
           artifacts=$(curl -s -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" "https://api.github.com/repos/proshkin/SkedaiAuthenticator/actions/artifacts")          
-          matchingArtifacts=$(echo "$artifacts" | jq -r --arg VERSION "_mac$version" '[.artifacts[] | select(.name | endswith($VERSION))]')
+          matchingArtifacts=$(echo "$artifacts" | jq -r --arg version "_mac$authenticator_version" '[.artifacts[] | select(.name | endswith($version))]')
           
           artifactCount=$(echo "$matchingArtifacts" | jq 'length')
           
           if [ "$artifactCount" -eq 0 ]; then
-            echo "No matching artifact found for version $version"
+            echo "No matching artifact found for version $authenticator_version"
             exit 1
           elif [ "$artifactCount" -gt 1 ]; then
             echo "Multiple matching artifacts found. Using the first one."
@@ -74,16 +72,15 @@ jobs:
       - name: Get latest UserServer using version number
         id: download-userserver
         run: |
-          version=${{ env.version }}
-          echo "Version: $version"
+          userserverversion=${{ env.userserver_version }}
           
           artifacts=$(curl -s -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" "https://api.github.com/repos/proshkin/SkedaiUserServer/actions/artifacts")          
-          matchingArtifacts=$(echo "$artifacts" | jq -r --arg VERSION "_mac$version" '[.artifacts[] | select(.name | endswith($VERSION))]')
+          matchingArtifacts=$(echo "$artifacts" | jq -r --arg version "_mac$userserver_version" '[.artifacts[] | select(.name | endswith($version))]')
           
           artifactCount=$(echo "$matchingArtifacts" | jq 'length')
           
           if [ "$artifactCount" -eq 0 ]; then
-            echo "No matching artifact found for version $version"
+            echo "No matching artifact found for version $userserver_version"
             exit 1
           elif [ "$artifactCount" -gt 1 ]; then
             echo "Multiple matching artifacts found. Using the first one."
@@ -127,12 +124,12 @@ jobs:
         run: |
           pkgbuild --root $GITHUB_WORKSPACE/pkgroot \
                    --identifier com.aitkn.skedaiuserserver \
-                   --version ${{ env.version }} \
+                   --version ${{ env.build_version }} \
                    --install-location / \
                    userServerInstaller.pkg
 
       - name: Upload installer package as artifact
         uses: actions/upload-artifact@v4
         with:
-          name: userServerInstaller_mac${{ env.version }}
+          name: userServerInstaller_mac${{ env.build_version }}
           path: userServerInstaller.pkg
