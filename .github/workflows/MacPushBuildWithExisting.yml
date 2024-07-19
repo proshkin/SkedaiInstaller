@@ -38,7 +38,7 @@ jobs:
             echo "Release not found, looking for artifact"
             artifacts=$(curl -s -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" "https://api.github.com/repos/proshkin/SkedaiSatRunner/actions/artifacts")
             echo "Artifacts response: $artifacts"
-            matchingArtifacts=$(echo "$artifacts" | jq -r --arg version "_mac$skedaisatrunner_version" '[.artifacts[] | select(.name | endswith($version) or .name | endswith("_$version"))]')
+            matchingArtifacts=$(echo "$artifacts" | jq -r --arg version "_mac$skedaisatrunner_version" '[.artifacts[] | select(.name | endswith($version) or .name | endswith("_" + $version))]')
             
             echo "Matching Artifacts: $matchingArtifacts"
 
@@ -59,7 +59,7 @@ jobs:
               echo "No macOS asset found in the release. Looking for artifact instead."
               artifacts=$(curl -s -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" "https://api.github.com/repos/proshkin/SkedaiSatRunner/actions/artifacts")
               echo "Artifacts response: $artifacts"
-              matchingArtifacts=$(echo "$artifacts" | jq -r --arg version "_mac$skedaisatrunner_version" '[.artifacts[] | select(.name | endswith($version) or .name | endswith("_$version"))]')
+              matchingArtifacts=$(echo "$artifacts" | jq -r --arg version "_mac$skedaisatrunner_version" '[.artifacts[] | select(.name | endswith($version) or .name | endswith("_" + $version))]')
               
               echo "Matching Artifacts: $matchingArtifacts"
 
@@ -102,7 +102,7 @@ jobs:
             echo "Release not found, looking for artifact"
             artifacts=$(curl -s -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" "https://api.github.com/repos/proshkin/SkedaiAuthenticator/actions/artifacts")
             echo "Artifacts response: $artifacts"
-            matchingArtifacts=$(echo "$artifacts" | jq -r --arg version "_mac$authenticator_version" '[.artifacts[] | select(.name | endswith($version) or .name | endswith("_$version"))]')
+            matchingArtifacts=$(echo "$artifacts" | jq -r --arg version "_mac$authenticator_version" '[.artifacts[] | select(.name | endswith($version) or .name | endswith("_" + $version))]')
             
             echo "Matching Artifacts: $matchingArtifacts"
 
@@ -123,7 +123,7 @@ jobs:
               echo "No macOS asset found in the release. Looking for artifact instead."
               artifacts=$(curl -s -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" "https://api.github.com/repos/proshkin/SkedaiAuthenticator/actions/artifacts")
               echo "Artifacts response: $artifacts"
-              matchingArtifacts=$(echo "$artifacts" | jq -r --arg version "_mac$authenticator_version" '[.artifacts[] | select(.name | endswith($version) or .name | endswith("_$version"))]')
+              matchingArtifacts=$(echo "$artifacts" | jq -r --arg version "_mac$authenticator_version" '[.artifacts[] | select(.name | endswith($version) or .name | endswith("_" + $version))]')
               
               echo "Matching Artifacts: $matchingArtifacts"
 
@@ -166,7 +166,7 @@ jobs:
             echo "Release not found, looking for artifact"
             artifacts=$(curl -s -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" "https://api.github.com/repos/proshkin/SkedaiUserServer/actions/artifacts")
             echo "Artifacts response: $artifacts"
-            matchingArtifacts=$(echo "$artifacts" | jq -r --arg version "_mac$userserver_version" '[.artifacts[] | select(.name | endswith($version) or .name | endswith("_$version"))]')
+            matchingArtifacts=$(echo "$artifacts" | jq -r --arg version "_mac$userserver_version" '[.artifacts[] | select(.name | endswith($version) or .name | endswith("_" + $version))]')
             
             echo "Matching Artifacts: $matchingArtifacts"
 
@@ -187,7 +187,7 @@ jobs:
               echo "No macOS asset found in the release. Looking for artifact instead."
               artifacts=$(curl -s -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" "https://api.github.com/repos/proshkin/SkedaiUserServer/actions/artifacts")
               echo "Artifacts response: $artifacts"
-              matchingArtifacts=$(echo "$artifacts" | jq -r --arg version "_mac$userserver_version" '[.artifacts[] | select(.name | endswith($version) or .name | endswith("_$version"))]')
+              matchingArtifacts=$(echo "$artifacts" | jq -r --arg version "_mac$userserver_version" '[.artifacts[] | select(.name | endswith($version) or .name | endswith("_" + $version))]')
               
               echo "Matching Artifacts: $matchingArtifacts"
 
