@@ -182,7 +182,7 @@ jobs:
           else
             echo "Release found. Checking assets..."
             echo "Release JSON Response: $json_response"
-            download_url=$(echo "$json_response" | jq -r '.assets[] | select(.name | endswith("_mac.zip") or endswith("mac_$userserver_version.zip") or endswith("userServer_mac_$userserver_version") or endswith("userServer_mac$userserver_version")).browser_download_url')
+            download_url=$(echo "$json_response" | jq -r '.assets[] | select(.name | "userServer_mac_0.1.76").browser_download_url')
             if [ -z "$download_url" ]; then
               echo "No macOS asset found in the release. Looking for artifact instead."
               artifacts_response=$(curl -s -w "\n%{http_code}" -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" "https://api.github.com/repos/proshkin/SkedaiUserServer/actions/artifacts")
