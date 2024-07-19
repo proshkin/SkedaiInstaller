@@ -27,9 +27,9 @@ jobs:
 
           if [ "$skedaisatrunner_version_lower" == "latest" ]; then
             echo "Fetching the latest release..."
-            release_url=$(curl -s -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" "https://api.github.com/repos/proshkin/SkedaiSatRunner/releases/latest" | jq -r '.assets[0].browser_download_url')
+            release_url=$(curl -s -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" "https://api.github.com/repos/proshkin/SkedaiSatRunner/releases/latest" | jq -r '.assets[] | select(.name | endswith("_mac.zip")).browser_download_url')
           else
-            release_url=$(curl -s -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" "https://api.github.com/repos/proshkin/SkedaiSatRunner/releases/tags/$skedaisatrunner_version" | jq -r '.assets[0].browser_download_url')
+            release_url=$(curl -s -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" "https://api.github.com/repos/proshkin/SkedaiSatRunner/releases/tags/$skedaisatrunner_version" | jq -r '.assets[] | select(.name | endswith("_mac.zip")).browser_download_url')
           fi
 
           if [ "$release_url" == "null" ]; then
@@ -65,9 +65,9 @@ jobs:
 
           if [ "$authenticator_version_lower" == "latest" ]; then
             echo "Fetching the latest release..."
-            release_url=$(curl -s -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" "https://api.github.com/repos/proshkin/SkedaiAuthenticator/releases/latest" | jq -r '.assets[0].browser_download_url')
+            release_url=$(curl -s -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" "https://api.github.com/repos/proshkin/SkedaiAuthenticator/releases/latest" | jq -r '.assets[] | select(.name | endswith("_mac.zip")).browser_download_url')
           else
-            release_url=$(curl -s -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" "https://api.github.com/repos/proshkin/SkedaiAuthenticator/releases/tags/$authenticator_version" | jq -r '.assets[0].browser_download_url')
+            release_url=$(curl -s -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" "https://api.github.com/repos/proshkin/SkedaiAuthenticator/releases/tags/$authenticator_version" | jq -r '.assets[] | select(.name | endswith("_mac.zip")).browser_download_url')
           fi
 
           if [ "$release_url" == "null" ]; then
@@ -103,9 +103,9 @@ jobs:
 
           if [ "$userserver_version_lower" == "latest" ]; then
             echo "Fetching the latest release..."
-            release_url=$(curl -s -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" "https://api.github.com/repos/proshkin/SkedaiUserServer/releases/latest" | jq -r '.assets[0].browser_download_url')
+            release_url=$(curl -s -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" "https://api.github.com/repos/proshkin/SkedaiUserServer/releases/latest" | jq -r '.assets[] | select(.name | endswith("_mac.zip")).browser_download_url')
           else
-            release_url=$(curl -s -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" "https://api.github.com/repos/proshkin/SkedaiUserServer/releases/tags/$userserver_version" | jq -r '.assets[0].browser_download_url')
+            release_url=$(curl -s -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" "https://api.github.com/repos/proshkin/SkedaiUserServer/releases/tags/$userserver_version" | jq -r '.assets[] | select(.name | endswith("_mac.zip")).browser_download_url')
           fi
 
           if [ "$release_url" == "null" ]; then
