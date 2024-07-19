@@ -182,6 +182,7 @@ jobs:
           else
             echo "Release found. Checking assets..."
             echo "Release JSON Response: $json_response"
+            echo "User Server Version: $userserver_version"
             download_url=$(echo "$json_response" | jq -r '.assets[] | select(.name | "userServer_mac_0.1.76").browser_download_url')
             if [ -z "$download_url" ]; then
               echo "No macOS asset found in the release. Looking for artifact instead."
