@@ -1,6 +1,10 @@
 name: Mac Push Build With Existing
 
-on: [push]
+on:
+  workflow_run:
+    workflows: ["Calculate Version and Trigger Build"]
+    types:
+      - completed
 
 jobs:
   build:
@@ -23,8 +27,9 @@ jobs:
         id: download-skedaisatrunner
         run: |
           skedaisatrunner_version=${{ env.skedaisatrunner_version }}
+          skedaisatrunner_version_lower=$(echo "$skedaisatrunner_version" | tr '[:upper:]' '[:lower:]')
 
-          if [ "${skedaisatrunner_version,,}" == "latest" ]; then
+          if [ "$skedaisatrunner_version_lower" == "latest" ]; then
             echo "Fetching the latest release..."
             release_url=$(curl -s -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" "https://api.github.com/repos/proshkin/SkedaiSatRunner/releases/latest" | jq -r '.assets[0].browser_download_url')
           else
@@ -60,8 +65,9 @@ jobs:
         id: download-authenticator
         run: |
           authenticator_version=${{ env.authenticator_version }}
+          authenticator_version_lower=$(echo "$authenticator_version" | tr '[:upper:]' '[:lower:]')
 
-          if [ "${authenticator_version,,}" == "latest" ]; then
+          if [ "$authenticator_version_lower" == "latest" ]; then
             echo "Fetching the latest release..."
             release_url=$(curl -s -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" "https://api.github.com/repos/proshkin/SkedaiAuthenticator/releases/latest" | jq -r '.assets[0].browser_download_url')
           else
@@ -97,8 +103,9 @@ jobs:
         id: download-userserver
         run: |
           userserver_version=${{ env.userserver_version }}
+          userserver_version_lower=$(echo "$userserver_version" | tr '[:upper:]' '[:lower:]')
 
-          if [ "${userserver_version,,}" == "latest" ]; then
+          if [ "$userserver_version_lower" == "latest" ]; then
             echo "Fetching the latest release..."
             release_url=$(curl -s -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" "https://api.github.com/repos/proshkin/SkedaiUserServer/releases/latest" | jq -r '.assets[0].browser_download_url')
           else
