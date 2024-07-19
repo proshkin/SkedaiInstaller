@@ -47,14 +47,14 @@ jobs:
               matchingArtifacts=$(echo "$artifacts_json" | jq -r --arg version "_mac$skedaisatrunner_version" '.artifacts[] | select(.name | endswith($version) or endswith("_" + $version))')
               
               echo "Matching Artifacts: $matchingArtifacts"
-              artifactCount=$(echo "$matchingArtifacts" | jq -s 'length')
+              artifactCount=$(echo "$matchingArtifacts" | jq -s '. | length')
               if [ "$artifactCount" -eq 0 ]; then
                 echo "No matching artifact found for version $skedaisatrunner_version"
                 exit 1
               elif [ "$artifactCount" -gt 1 ]; then
                 echo "Multiple matching artifacts found. Using the first one."
               fi
-              artifactId=$(echo "$matchingArtifacts" | jq -r 'first | .id')
+              artifactId=$(echo "$matchingArtifacts" | jq -s '.[0].id')
               download_url="https://api.github.com/repos/proshkin/SkedaiSatRunner/actions/artifacts/$artifactId/zip"
             else
               echo "Failed to fetch artifacts. HTTP Status: $artifacts_http_status"
@@ -74,14 +74,14 @@ jobs:
                 matchingArtifacts=$(echo "$artifacts_json" | jq -r --arg version "_mac$skedaisatrunner_version" '.artifacts[] | select(.name | endswith($version) or endswith("_" + $version))')
                 
                 echo "Matching Artifacts: $matchingArtifacts"
-                artifactCount=$(echo "$matchingArtifacts" | jq -s 'length')
+                artifactCount=$(echo "$matchingArtifacts" | jq -s '. | length')
                 if [ "$artifactCount" -eq 0 ]; then
                   echo "No matching artifact found for version $skedaisatrunner_version"
                   exit 1
                 elif [ "$artifactCount" -gt 1 ]; then
                   echo "Multiple matching artifacts found. Using the first one."
                 fi
-                artifactId=$(echo "$matchingArtifacts" | jq -r 'first | .id')
+                artifactId=$(echo "$matchingArtifacts" | jq -s '.[0].id')
                 download_url="https://api.github.com/repos/proshkin/SkedaiSatRunner/actions/artifacts/$artifactId/zip"
               else
                 echo "Failed to fetch artifacts. HTTP Status: $artifacts_http_status"
