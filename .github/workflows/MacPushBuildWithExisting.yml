@@ -34,7 +34,6 @@ jobs:
 
           echo "GitHub API response: $response"
 
-          # Check if the response contains a "message" field with "Not Found"
           if echo "$response" | jq -e '.message == "Not Found"' > /dev/null; then
             echo "Release not found, looking for artifact"
             artifacts=$(curl -s -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" "https://api.github.com/repos/proshkin/SkedaiSatRunner/actions/artifacts")          
@@ -51,8 +50,24 @@ jobs:
             artifactId=$(echo "$matchingArtifacts" | jq -r '.[0].id')          
             download_url="https://api.github.com/repos/proshkin/SkedaiSatRunner/actions/artifacts/$artifactId/zip"
           else
-            # Extract the macOS asset download URL from the release response
             download_url=$(echo "$response" | jq -r '.assets[] | select(.name | endswith("_mac.zip")).browser_download_url')
+
+            if [ -z "$download_url" ]; then
+              echo "No macOS asset found in the release. Looking for artifact instead."
+              artifacts=$(curl -s -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" "https://api.github.com/repos/proshkin/SkedaiSatRunner/actions/artifacts")          
+              matchingArtifacts=$(echo "$artifacts" | jq -r --arg version "_mac$skedaisatrunner_version" '[.artifacts[] | select(.name | endswith($version))]')
+              
+              artifactCount=$(echo "$matchingArtifacts" | jq 'length')
+              if [ "$artifactCount" -eq 0 ]; then
+                echo "No matching artifact found for version $skedaisatrunner_version"
+                exit 1
+              elif [ "$artifactCount" -gt 1 ]; then
+                echo "Multiple matching artifacts found. Using the first one."
+              fi
+
+              artifactId=$(echo "$matchingArtifacts" | jq -r '.[0].id')          
+              download_url="https://api.github.com/repos/proshkin/SkedaiSatRunner/actions/artifacts/$artifactId/zip"
+            fi
           fi
 
           curl -L -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" -o artifact.zip "$download_url"
@@ -93,6 +108,23 @@ jobs:
             download_url="https://api.github.com/repos/proshkin/SkedaiAuthenticator/actions/artifacts/$artifactId/zip"
           else
             download_url=$(echo "$response" | jq -r '.assets[] | select(.name | endswith("_mac.zip")).browser_download_url')
+
+            if [ -z "$download_url" ]; then
+              echo "No macOS asset found in the release. Looking for artifact instead."
+              artifacts=$(curl -s -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" "https://api.github.com/repos/proshkin/SkedaiAuthenticator/actions/artifacts")          
+              matchingArtifacts=$(echo "$artifacts" | jq -r --arg version "_mac$authenticator_version" '[.artifacts[] | select(.name | endswith($version))]')
+              
+              artifactCount=$(echo "$matchingArtifacts" | jq 'length')
+              if [ "$artifactCount" -eq 0 ]; then
+                echo "No matching artifact found for version $authenticator_version"
+                exit 1
+              elif [ "$artifactCount" -gt 1 ]; then
+                echo "Multiple matching artifacts found. Using the first one."
+              fi
+
+              artifactId=$(echo "$matchingArtifacts" | jq -r '.[0].id')          
+              download_url="https://api.github.com/repos/proshkin/SkedaiAuthenticator/actions/artifacts/$artifactId/zip"
+            fi
           fi
 
           curl -L -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" -o artifact.zip "$download_url"
@@ -133,6 +165,23 @@ jobs:
             download_url="https://api.github.com/repos/proshkin/SkedaiUserServer/actions/artifacts/$artifactId/zip"
           else
             download_url=$(echo "$response" | jq -r '.assets[] | select(.name | endswith("_mac.zip")).browser_download_url')
+
+            if [ -z "$download_url" ]; then
+              echo "No macOS asset found in the release. Looking for artifact instead."
+              artifacts=$(curl -s -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" "https://api.github.com/repos/proshkin/SkedaiUserServer/actions/artifacts")          
+              matchingArtifacts=$(echo "$artifacts" | jq -r --arg version "_mac$userserver_version" '[.artifacts[] | select(.name | endswith($version))]')
+              
+              artifactCount=$(echo "$matchingArtifacts" | jq 'length')
+              if [ "$artifactCount" -eq 0 ]; then
+                echo "No matching artifact found for version $userserver_version"
+                exit 1
+              elif [ "$artifactCount" -gt 1 ]; then
+                echo "Multiple matching artifacts found. Using the first one."
+              fi
+
+              artifactId=$(echo "$matchingArtifacts" | jq -r '.[0].id')          
+              download_url="https://api.github.com/repos/proshkin/SkedaiUserServer/actions/artifacts/$artifactId/zip"
+            fi
           fi
 
           curl -L -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" -o artifact.zip "$download_url"
