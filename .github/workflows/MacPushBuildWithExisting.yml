@@ -24,58 +24,71 @@ jobs:
         run: |
           skedaisatrunner_version=${{ env.skedaisatrunner_version }}
           skedaisatrunner_version_lower=$(echo "$skedaisatrunner_version" | tr '[:upper:]' '[:lower:]')
-
           if [ "$skedaisatrunner_version_lower" == "latest" ]; then
             echo "Fetching the latest release..."
-            response=$(curl -s -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" "https://api.github.com/repos/proshkin/SkedaiSatRunner/releases/latest")
+            response=$(curl -s -w "\n%{http_code}" -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" "https://api.github.com/repos/proshkin/SkedaiSatRunner/releases/latest")
           else
-            response=$(curl -s -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" "https://api.github.com/repos/proshkin/SkedaiSatRunner/releases/tags/$skedaisatrunner_version")
+            response=$(curl -s -w "\n%{http_code}" -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" "https://api.github.com/repos/proshkin/SkedaiSatRunner/releases/tags/$skedaisatrunner_version")
           fi
-
-          echo "GitHub API response: $response"
-
-          if echo "$response" | jq -e '.message == "Not Found"' > /dev/null; then
+          http_status=$(echo "$response" | tail -n1)
+          json_response=$(echo "$response" | sed '$d')
+          echo "GitHub API response: $json_response"
+          echo "HTTP Status: $http_status"
+          
+          if [ "$http_status" != "200" ]; then
             echo "Release not found, looking for artifact"
-            artifacts=$(curl -s -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" "https://api.github.com/repos/proshkin/SkedaiSatRunner/actions/artifacts")
-            echo "Artifacts response: $artifacts"
-            matchingArtifacts=$(echo "$artifacts" | jq -r --arg version "_mac$skedaisatrunner_version" '[.artifacts[] | select(.name | endswith($version) or .name | endswith("_" + $version))]')
+            artifacts_response=$(curl -s -w "\n%{http_code}" -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" "https://api.github.com/repos/proshkin/SkedaiSatRunner/actions/artifacts")
+            artifacts_http_status=$(echo "$artifacts_response" | tail -n1)
+            artifacts_json=$(echo "$artifacts_response" | sed '$d')
+            echo "Artifacts HTTP Status: $artifacts_http_status"
+            echo "Artifacts response: $artifacts_json"
             
-            echo "Matching Artifacts: $matchingArtifacts"
-
-            artifactCount=$(echo "$matchingArtifacts" | jq 'length')
-            if [ "$artifactCount" -eq 0 ]; then
-              echo "No matching artifact found for version $skedaisatrunner_version"
-              exit 1
-            elif [ "$artifactCount" -gt 1 ]; then
-              echo "Multiple matching artifacts found. Using the first one."
-            fi
-
-            artifactId=$(echo "$matchingArtifacts" | jq -r '.[0].id')
-            download_url="https://api.github.com/repos/proshkin/SkedaiSatRunner/actions/artifacts/$artifactId/zip"
-          else
-            download_url=$(echo "$response" | jq -r '.assets[] | select(.name | endswith("_mac.zip") or .name | endswith("mac_$skedaisatrunner_version.zip")).browser_download_url')
-
-            if [ -z "$download_url" ]; then
-              echo "No macOS asset found in the release. Looking for artifact instead."
-              artifacts=$(curl -s -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" "https://api.github.com/repos/proshkin/SkedaiSatRunner/actions/artifacts")
-              echo "Artifacts response: $artifacts"
-              matchingArtifacts=$(echo "$artifacts" | jq -r --arg version "_mac$skedaisatrunner_version" '[.artifacts[] | select(.name | endswith($version) or .name | endswith("_" + $version))]')
+            if [ "$artifacts_http_status" == "200" ]; then
+              matchingArtifacts=$(echo "$artifacts_json" | jq -r --arg version "_mac$skedaisatrunner_version" '.artifacts[] | select(.name | endswith($version) or endswith("_" + $version))')
               
               echo "Matching Artifacts: $matchingArtifacts"
-
-              artifactCount=$(echo "$matchingArtifacts" | jq 'length')
+              artifactCount=$(echo "$matchingArtifacts" | jq -s 'length')
               if [ "$artifactCount" -eq 0 ]; then
                 echo "No matching artifact found for version $skedaisatrunner_version"
                 exit 1
               elif [ "$artifactCount" -gt 1 ]; then
                 echo "Multiple matching artifacts found. Using the first one."
               fi
-
-              artifactId=$(echo "$matchingArtifacts" | jq -r '.[0].id')
+              artifactId=$(echo "$matchingArtifacts" | jq -r 'first | .id')
               download_url="https://api.github.com/repos/proshkin/SkedaiSatRunner/actions/artifacts/$artifactId/zip"
+            else
+              echo "Failed to fetch artifacts. HTTP Status: $artifacts_http_status"
+              exit 1
+            fi
+          else
+            download_url=$(echo "$json_response" | jq -r '.assets[] | select(.name | endswith("_mac.zip") or endswith("mac_$skedaisatrunner_version.zip")).browser_download_url')
+            if [ -z "$download_url" ]; then
+              echo "No macOS asset found in the release. Looking for artifact instead."
+              artifacts_response=$(curl -s -w "\n%{http_code}" -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" "https://api.github.com/repos/proshkin/SkedaiSatRunner/actions/artifacts")
+              artifacts_http_status=$(echo "$artifacts_response" | tail -n1)
+              artifacts_json=$(echo "$artifacts_response" | sed '$d')
+              echo "Artifacts HTTP Status: $artifacts_http_status"
+              echo "Artifacts response: $artifacts_json"
+              
+              if [ "$artifacts_http_status" == "200" ]; then
+                matchingArtifacts=$(echo "$artifacts_json" | jq -r --arg version "_mac$skedaisatrunner_version" '.artifacts[] | select(.name | endswith($version) or endswith("_" + $version))')
+                
+                echo "Matching Artifacts: $matchingArtifacts"
+                artifactCount=$(echo "$matchingArtifacts" | jq -s 'length')
+                if [ "$artifactCount" -eq 0 ]; then
+                  echo "No matching artifact found for version $skedaisatrunner_version"
+                  exit 1
+                elif [ "$artifactCount" -gt 1 ]; then
+                  echo "Multiple matching artifacts found. Using the first one."
+                fi
+                artifactId=$(echo "$matchingArtifacts" | jq -r 'first | .id')
+                download_url="https://api.github.com/repos/proshkin/SkedaiSatRunner/actions/artifacts/$artifactId/zip"
+              else
+                echo "Failed to fetch artifacts. HTTP Status: $artifacts_http_status"
+                exit 1
+              fi
             fi
           fi
-
           echo "Download URL: $download_url"
           curl -L -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" -o artifact.zip "$download_url"
           artifactDir="components"
