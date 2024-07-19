@@ -153,6 +153,7 @@ jobs:
             echo "Fetching the latest release..."
             response=$(curl -s -w "\n%{http_code}" -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" "https://api.github.com/repos/proshkin/SkedaiUserServer/releases/latest")
           else
+            echo "Fetching release for version $userserver_version..."
             response=$(curl -s -w "\n%{http_code}" -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" "https://api.github.com/repos/proshkin/SkedaiUserServer/releases/tags/$userserver_version")
           fi
 
@@ -179,6 +180,8 @@ jobs:
               exit 1
             fi
           else
+            echo "Release found. Checking assets..."
+            echo "Release JSON Response: $json_response"
             download_url=$(echo "$json_response" | jq -r '.assets[] | select(.name | endswith("_mac.zip") or endswith("mac_$userserver_version.zip")).browser_download_url')
             if [ -z "$download_url" ]; then
               echo "No macOS asset found in the release. Looking for artifact instead."
