@@ -27,10 +27,14 @@ jobs:
 
           if [ "$skedaisatrunner_version_lower" == "latest" ]; then
             echo "Fetching the latest release..."
-            release_url=$(curl -s -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" "https://api.github.com/repos/proshkin/SkedaiSatRunner/releases/latest" | jq -r '.assets[] | select(.name | endswith("_mac.zip")).browser_download_url')
+            response=$(curl -s -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" "https://api.github.com/repos/proshkin/SkedaiSatRunner/releases/latest")
           else
-            release_url=$(curl -s -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" "https://api.github.com/repos/proshkin/SkedaiSatRunner/releases/tags/$skedaisatrunner_version" | jq -r '.assets[] | select(.name | endswith("_mac.zip")).browser_download_url')
+            response=$(curl -s -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" "https://api.github.com/repos/proshkin/SkedaiSatRunner/releases/tags/$skedaisatrunner_version")
           fi
+
+          echo "GitHub API response: $response"
+
+          release_url=$(echo "$response" | jq -r '.assets[] | select(.name | endswith("_mac.zip")).browser_download_url')
 
           if [ "$release_url" == "null" ]; then
             echo "Release not found, looking for artifact"
@@ -65,10 +69,14 @@ jobs:
 
           if [ "$authenticator_version_lower" == "latest" ]; then
             echo "Fetching the latest release..."
-            release_url=$(curl -s -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" "https://api.github.com/repos/proshkin/SkedaiAuthenticator/releases/latest" | jq -r '.assets[] | select(.name | endswith("_mac.zip")).browser_download_url')
+            response=$(curl -s -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" "https://api.github.com/repos/proshkin/SkedaiAuthenticator/releases/latest")
           else
-            release_url=$(curl -s -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" "https://api.github.com/repos/proshkin/SkedaiAuthenticator/releases/tags/$authenticator_version" | jq -r '.assets[] | select(.name | endswith("_mac.zip")).browser_download_url')
+            response=$(curl -s -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" "https://api.github.com/repos/proshkin/SkedaiAuthenticator/releases/tags/$authenticator_version")
           fi
+
+          echo "GitHub API response: $response"
+
+          release_url=$(echo "$response" | jq -r '.assets[] | select(.name | endswith("_mac.zip")).browser_download_url')
 
           if [ "$release_url" == "null" ]; then
             echo "Release not found, looking for artifact"
@@ -103,10 +111,14 @@ jobs:
 
           if [ "$userserver_version_lower" == "latest" ]; then
             echo "Fetching the latest release..."
-            release_url=$(curl -s -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" "https://api.github.com/repos/proshkin/SkedaiUserServer/releases/latest" | jq -r '.assets[] | select(.name | endswith("_mac.zip")).browser_download_url')
+            response=$(curl -s -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" "https://api.github.com/repos/proshkin/SkedaiUserServer/releases/latest")
           else
-            release_url=$(curl -s -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" "https://api.github.com/repos/proshkin/SkedaiUserServer/releases/tags/$userserver_version" | jq -r '.assets[] | select(.name | endswith("_mac.zip")).browser_download_url')
+            response=$(curl -s -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" "https://api.github.com/repos/proshkin/SkedaiUserServer/releases/tags/$userserver_version")
           fi
+
+          echo "GitHub API response: $response"
+
+          release_url=$(echo "$response" | jq -r '.assets[] | select(.name | endswith("_mac.zip")).browser_download_url')
 
           if [ "$release_url" == "null" ]; then
             echo "Release not found, looking for artifact"
