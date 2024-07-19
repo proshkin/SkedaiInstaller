@@ -1,10 +1,6 @@
 name: Mac Push Build With Existing
 
-on:
-  workflow_run:
-    workflows: ["Calculate Version and Trigger Build"]
-    types:
-      - completed
+on: [push]
 
 jobs:
   build:
