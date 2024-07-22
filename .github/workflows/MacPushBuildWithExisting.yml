@@ -57,17 +57,21 @@ jobs:
               mkdir -p $artifactDir
               unzip -q artifact.zip -d $artifactDir
 
-              exePattern1="skedaiSatRunner_mac"
-              exePattern2="SkedaiSatRunner"
-              exeFile=$(find $artifactDir -name "$exePattern1" -o -name "$exePattern2" | head -n 1)
-              if [ -n "$exeFile" ]; then
-                mv "$exeFile" "$artifactDir/skedaiSatRunner_mac"
-              else
-                echo "No executable file matching the pattern '$exePattern1' or '$exePattern2' found in the extracted artifacts."
-                echo "Files found in artifact directory:"
-                find $artifactDir -type f
-                exit 1
+            exePattern1="skedaiSatRunner_mac"
+            exePattern2="SkedaiSatRunner"
+            exeFile=$(find $artifactDir -name "$exePattern1" -o -name "$exePattern2" | head -n 1)
+            if [ -n "$exeFile" ]; then
+              if [[ "$exeFile" != *"_mac" ]]; then
+                mv "$exeFile" "${exeFile}_mac"
+                exeFile="${exeFile}_mac"
               fi
+              mv "$exeFile" "$artifactDir/skedaiSatRunner_mac"
+            else
+              echo "No executable file matching the pattern '$exePattern1' or '$exePattern2' found in the extracted artifacts."
+              echo "Files found in artifact directory:"
+              find $artifactDir -type f
+              exit 1
+            fi
             else
               echo "Failed to fetch artifacts. HTTP Status: $artifacts_http_status"
               exit 1
@@ -99,6 +103,10 @@ jobs:
                 exePattern2="SkedaiSatRunner"
                 exeFile=$(find $artifactDir -name "$exePattern1" -o -name "$exePattern2" | head -n 1)
                 if [ -n "$exeFile" ]; then
+                  if [[ "$exeFile" != *"_mac" ]]; then
+                    mv "$exeFile" "${exeFile}_mac"
+                    exeFile="${exeFile}_mac"
+                  fi
                   mv "$exeFile" "$artifactDir/skedaiSatRunner_mac"
                 else
                   echo "No executable file matching the pattern '$exePattern1' or '$exePattern2' found in the extracted artifacts."
@@ -159,6 +167,10 @@ jobs:
               exePattern2="authenticator"
               exeFile=$(find $artifactDir -name "$exePattern1" -o -name "$exePattern2" | head -n 1)
               if [ -n "$exeFile" ]; then
+                if [[ "$exeFile" != *"_mac" ]]; then
+                  mv "$exeFile" "${exeFile}_mac"
+                  exeFile="${exeFile}_mac"
+                fi
                 mv "$exeFile" "$artifactDir/authenticator_mac"
               else
                 echo "No executable file matching the pattern '$exePattern1' or '$exePattern2' found in the extracted artifacts."
@@ -197,6 +209,10 @@ jobs:
                 exePattern2="authenticator"
                 exeFile=$(find $artifactDir -name "$exePattern1" -o -name "$exePattern2" | head -n 1)
                 if [ -n "$exeFile" ]; then
+                  if [[ "$exeFile" != *"_mac" ]]; then
+                    mv "$exeFile" "${exeFile}_mac"
+                    exeFile="${exeFile}_mac"
+                  fi
                   mv "$exeFile" "$artifactDir/authenticator_mac"
                 else
                   echo "No executable file matching the pattern '$exePattern1' or '$exePattern2' found in the extracted artifacts."
@@ -258,6 +274,10 @@ jobs:
               exePattern2="userServer"
               exeFile=$(find $artifactDir -name "$exePattern1" -o -name "$exePattern2" | head -n 1)
               if [ -n "$exeFile" ]; then
+                if [[ "$exeFile" != *"_mac" ]]; then
+                  mv "$exeFile" "${exeFile}_mac"
+                  exeFile="${exeFile}_mac"
+                fi
                 mv "$exeFile" "$artifactDir/userServer_mac"
               else
                 echo "No executable file matching the pattern '$exePattern1' or '$exePattern2' found in the extracted artifacts."
