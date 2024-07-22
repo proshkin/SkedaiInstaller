@@ -24,16 +24,19 @@ jobs:
         run: |
           skedaisatrunner_version=${{ env.skedaisatrunner_version }}
           skedaisatrunner_version_lower=$(echo "$skedaisatrunner_version" | tr '[:upper:]' '[:lower:]')
+
           if [ "$skedaisatrunner_version_lower" == "latest" ]; then
             echo "Fetching the latest release..."
             response=$(curl -s -w "\n%{http_code}" -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" "https://api.github.com/repos/proshkin/SkedaiSatRunner/releases/latest")
           else
+            echo "Fetching release for version $skedaisatrunner_version..."
             response=$(curl -s -w "\n%{http_code}" -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" "https://api.github.com/repos/proshkin/SkedaiSatRunner/releases/tags/$skedaisatrunner_version")
           fi
+
           http_status=$(echo "$response" | tail -n1)
           json_response=$(echo "$response" | sed '$d')
           echo "HTTP Status: $http_status"
-          
+
           if [ "$http_status" != "200" ]; then
             echo "Release not found, looking for artifact"
             artifacts_response=$(curl -s -w "\n%{http_code}" -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" "https://api.github.com/repos/proshkin/SkedaiSatRunner/actions/artifacts")
@@ -48,12 +51,27 @@ jobs:
                 exit 1
               fi
               download_url="https://api.github.com/repos/proshkin/SkedaiSatRunner/actions/artifacts/$matchingArtifacts/zip"
+              echo "Download URL: $download_url"
+              curl -L -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" -o artifact.zip "$download_url"
+              artifactDir="components"
+              mkdir -p $artifactDir
+              unzip -q artifact.zip -d $artifactDir
+
+              exePattern="skedaisatrunner_mac"
+              exeFile=$(find $artifactDir -name "$exePattern" | head -n 1)
+              if [ -n "$exeFile" ]; then
+                mv "$exeFile" "$artifactDir/skedaisatrunner_mac"
+              else
+                echo "No executable file matching the pattern '$exePattern' found in the extracted artifacts."
+                exit 1
+              fi
             else
               echo "Failed to fetch artifacts. HTTP Status: $artifacts_http_status"
               exit 1
             fi
           else
-            download_url=$(echo "$json_response" | jq -r '.assets[] | select(.name | endswith("_mac.zip") or endswith("mac_$skedaisatrunner_version.zip")).browser_download_url')
+            echo "Release found. Checking assets..."
+            download_url=$(echo "$json_response" | jq -r --arg version "mac_${skedaisatrunner_version}" '.assets[] | select(.name | endswith($version)).browser_download_url')
             if [ -z "$download_url" ]; then
               echo "No macOS asset found in the release. Looking for artifact instead."
               artifacts_response=$(curl -s -w "\n%{http_code}" -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" "https://api.github.com/repos/proshkin/SkedaiSatRunner/actions/artifacts")
@@ -68,17 +86,29 @@ jobs:
                   exit 1
                 fi
                 download_url="https://api.github.com/repos/proshkin/SkedaiSatRunner/actions/artifacts/$matchingArtifacts/zip"
+                echo "Download URL: $download_url"
+                curl -L -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" -o artifact.zip "$download_url"
+                artifactDir="components"
+                mkdir -p $artifactDir
+                unzip -q artifact.zip -d $artifactDir
+
+                exePattern="skedaisatrunner_mac"
+                exeFile=$(find $artifactDir -name "$exePattern" | head -n 1)
+                if [ -n "$exeFile" ]; then
+                  mv "$exeFile" "$artifactDir/skedaisatrunner_mac"
+                else
+                  echo "No executable file matching the pattern '$exePattern' found in the extracted artifacts."
+                  exit 1
+                fi
               else
                 echo "Failed to fetch artifacts. HTTP Status: $artifacts_http_status"
                 exit 1
               fi
+            else
+              echo "Download URL: $download_url"
+              curl -L -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" -o components/skedaisatrunner_mac "$download_url"
             fi
           fi
-          echo "Download URL: $download_url"
-          curl -L -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" -o artifact.zip "$download_url"
-          artifactDir="components"
-          mkdir -p $artifactDir
-          unzip -q artifact.zip -d $artifactDir
         shell: bash
 
       - name: Get Authenticator using version number
@@ -86,16 +116,19 @@ jobs:
         run: |
           authenticator_version=${{ env.authenticator_version }}
           authenticator_version_lower=$(echo "$authenticator_version" | tr '[:upper:]' '[:lower:]')
+
           if [ "$authenticator_version_lower" == "latest" ]; then
             echo "Fetching the latest release..."
             response=$(curl -s -w "\n%{http_code}" -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" "https://api.github.com/repos/proshkin/SkedaiAuthenticator/releases/latest")
           else
+            echo "Fetching release for version $authenticator_version..."
             response=$(curl -s -w "\n%{http_code}" -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" "https://api.github.com/repos/proshkin/SkedaiAuthenticator/releases/tags/$authenticator_version")
           fi
+
           http_status=$(echo "$response" | tail -n1)
           json_response=$(echo "$response" | sed '$d')
           echo "HTTP Status: $http_status"
-          
+
           if [ "$http_status" != "200" ]; then
             echo "Release not found, looking for artifact"
             artifacts_response=$(curl -s -w "\n%{http_code}" -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" "https://api.github.com/repos/proshkin/SkedaiAuthenticator/actions/artifacts")
@@ -110,12 +143,27 @@ jobs:
                 exit 1
               fi
               download_url="https://api.github.com/repos/proshkin/SkedaiAuthenticator/actions/artifacts/$matchingArtifacts/zip"
+              echo "Download URL: $download_url"
+              curl -L -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" -o artifact.zip "$download_url"
+              artifactDir="components"
+              mkdir -p $artifactDir
+              unzip -q artifact.zip -d $artifactDir
+
+              exePattern="authenticator_mac"
+              exeFile=$(find $artifactDir -name "$exePattern" | head -n 1)
+              if [ -n "$exeFile" ]; then
+                mv "$exeFile" "$artifactDir/authenticator_mac"
+              else
+                echo "No executable file matching the pattern '$exePattern' found in the extracted artifacts."
+                exit 1
+              fi
             else
               echo "Failed to fetch artifacts. HTTP Status: $artifacts_http_status"
               exit 1
             fi
           else
-            download_url=$(echo "$json_response" | jq -r '.assets[] | select(.name | endswith("_mac.zip") or endswith("mac_$authenticator_version.zip")).browser_download_url')
+            echo "Release found. Checking assets..."
+            download_url=$(echo "$json_response" | jq -r --arg version "mac_${authenticator_version}" '.assets[] | select(.name | endswith($version)).browser_download_url')
             if [ -z "$download_url" ]; then
               echo "No macOS asset found in the release. Looking for artifact instead."
               artifacts_response=$(curl -s -w "\n%{http_code}" -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" "https://api.github.com/repos/proshkin/SkedaiAuthenticator/actions/artifacts")
@@ -130,17 +178,29 @@ jobs:
                   exit 1
                 fi
                 download_url="https://api.github.com/repos/proshkin/SkedaiAuthenticator/actions/artifacts/$matchingArtifacts/zip"
+                echo "Download URL: $download_url"
+                curl -L -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" -o artifact.zip "$download_url"
+                artifactDir="components"
+                mkdir -p $artifactDir
+                unzip -q artifact.zip -d $artifactDir
+
+                exePattern="authenticator_mac"
+                exeFile=$(find $artifactDir -name "$exePattern" | head -n 1)
+                if [ -n "$exeFile" ]; then
+                  mv "$exeFile" "$artifactDir/authenticator_mac"
+                else
+                  echo "No executable file matching the pattern '$exePattern' found in the extracted artifacts."
+                  exit 1
+                fi
               else
                 echo "Failed to fetch artifacts. HTTP Status: $artifacts_http_status"
                 exit 1
               fi
+            else
+              echo "Download URL: $download_url"
+              curl -L -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" -o components/authenticator_mac "$download_url"
             fi
           fi
-          echo "Download URL: $download_url"
-          curl -L -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" -o artifact.zip "$download_url"
-          artifactDir="components"
-          mkdir -p $artifactDir
-          unzip -q artifact.zip -d $artifactDir
         shell: bash
 
       - name: Get UserServer using version number
