@@ -20,7 +20,6 @@ jobs:
         shell: bash
 
 
-
       - name: Get Authenticator using version number
         id: download-authenticator
         run: |
@@ -45,9 +44,9 @@ jobs:
             artifacts_http_status=$(echo "$artifacts_response" | tail -n1)
             artifacts_json=$(echo "$artifacts_response" | sed '$d')
             echo "Artifacts HTTP Status: $artifacts_http_status"
-            
+
             if [ "$artifacts_http_status" == "200" ]; then
-              matchingArtifacts=$(echo "$artifacts_json" | jq -r --arg version "_mac$authenticator_version" '.artifacts[] | select(.name | endswith($version) or endswith("_" + $version)) | .id' | head -n 1)
+              matchingArtifacts=$(echo "$artifacts_json" | jq -r --arg version "_mac$authenticator_version" --arg version2 "_mac_$authenticator_version" '.artifacts[] | select(.name | endswith($version) or endswith($version2)) | .id' | head -n 1)
               if [ -z "$matchingArtifacts" ]; then
                 echo "No matching artifact found for version $authenticator_version"
                 exit 1
@@ -65,6 +64,8 @@ jobs:
                 mv "$exeFile" "$artifactDir/authenticator_mac"
               else
                 echo "No executable file matching the pattern '$exePattern' found in the extracted artifacts."
+                echo "Files found in artifact directory:"
+                find $artifactDir -type f
                 exit 1
               fi
             else
@@ -73,16 +74,16 @@ jobs:
             fi
           else
             echo "Release found. Checking assets..."
-            download_url=$(echo "$json_response" | jq -r --arg version "mac_${authenticator_version}" '.assets[] | select(.name | endswith($version)).browser_download_url')
+            download_url=$(echo "$json_response" | jq -r --arg version "mac_$authenticator_version" '.assets[] | select(.name | endswith($version)).browser_download_url')
             if [ -z "$download_url" ]; then
               echo "No macOS asset found in the release. Looking for artifact instead."
               artifacts_response=$(curl -s -w "\n%{http_code}" -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" "https://api.github.com/repos/proshkin/SkedaiAuthenticator/actions/artifacts")
               artifacts_http_status=$(echo "$artifacts_response" | tail -n1)
               artifacts_json=$(echo "$artifacts_response" | sed '$d')
               echo "Artifacts HTTP Status: $artifacts_http_status"
-              
+
               if [ "$artifacts_http_status" == "200" ]; then
-                matchingArtifacts=$(echo "$artifacts_json" | jq -r --arg version "_mac$authenticator_version" '.artifacts[] | select(.name | endswith($version) or endswith("_" + $version)) | .id' | head -n 1)
+                matchingArtifacts=$(echo "$artifacts_json" | jq -r --arg version "_mac$authenticator_version" --arg version2 "_mac_$authenticator_version" '.artifacts[] | select(.name | endswith($version) or endswith($version2)) | .id' | head -n 1)
                 if [ -z "$matchingArtifacts" ]; then
                   echo "No matching artifact found for version $authenticator_version"
                   exit 1
@@ -100,6 +101,8 @@ jobs:
                   mv "$exeFile" "$artifactDir/authenticator_mac"
                 else
                   echo "No executable file matching the pattern '$exePattern' found in the extracted artifacts."
+                  echo "Files found in artifact directory:"
+                  find $artifactDir -type f
                   exit 1
                 fi
               else
@@ -112,6 +115,7 @@ jobs:
             fi
           fi
         shell: bash
+
 
       - name: Get UserServer using version number
         id: download-userserver
