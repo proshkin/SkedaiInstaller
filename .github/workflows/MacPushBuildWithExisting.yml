@@ -45,7 +45,7 @@ jobs:
             echo "Artifacts HTTP Status: $artifacts_http_status"
             
             if [ "$artifacts_http_status" == "200" ]; then
-              matchingArtifacts=$(echo "$artifacts_json" | jq -r --arg version "_mac$skedaisatrunner_version" '.artifacts[] | select(.name | endswith($version) or endswith("_" + $version)) | .id' | head -n 1)
+              matchingArtifacts=$(echo "$artifacts_json" | jq -r --arg version "_mac$skedaisatrunner_version" '.artifacts[] | select(.name | endswith($version) or endswith("_" + $version) or endswith("_mac" + $version) or endswith("mac" + $version)) | .id' | head -n 1)
               if [ -z "$matchingArtifacts" ]; then
                 echo "No matching artifact found for version $skedaisatrunner_version"
                 exit 1
@@ -80,7 +80,7 @@ jobs:
               echo "Artifacts HTTP Status: $artifacts_http_status"
               
               if [ "$artifacts_http_status" == "200" ]; then
-                matchingArtifacts=$(echo "$artifacts_json" | jq -r --arg version "_mac$skedaisatrunner_version" '.artifacts[] | select(.name | endswith($version) or endswith("_" + $version)) | .id' | head -n 1)
+                matchingArtifacts=$(echo "$artifacts_json" | jq -r --arg version "_mac$skedaisatrunner_version" '.artifacts[] | select(.name | endswith($version) or endswith("_" + $version) or endswith("_mac" + $version) or endswith("mac" + $version)) | .id' | head -n 1)
                 if [ -z "$matchingArtifacts" ]; then
                   echo "No matching artifact found for version $skedaisatrunner_version"
                   exit 1
@@ -137,7 +137,7 @@ jobs:
             echo "Artifacts HTTP Status: $artifacts_http_status"
             
             if [ "$artifacts_http_status" == "200" ]; then
-              matchingArtifacts=$(echo "$artifacts_json" | jq -r --arg version "_mac$authenticator_version" '.artifacts[] | select(.name | endswith($version) or endswith("_" + $version)) | .id' | head -n 1)
+              matchingArtifacts=$(echo "$artifacts_json" | jq -r --arg version "_mac$authenticator_version" '.artifacts[] | select(.name | endswith($version) or endswith("_" + $version) or endswith("_mac" + $version) or endswith("mac" + $version)) | .id' | head -n 1)
               if [ -z "$matchingArtifacts" ]; then
                 echo "No matching artifact found for version $authenticator_version"
                 exit 1
@@ -172,7 +172,7 @@ jobs:
               echo "Artifacts HTTP Status: $artifacts_http_status"
               
               if [ "$artifacts_http_status" == "200" ]; then
-                matchingArtifacts=$(echo "$artifacts_json" | jq -r --arg version "_mac$authenticator_version" '.artifacts[] | select(.name | endswith($version) or endswith("_" + $version)) | .id' | head -n 1)
+                matchingArtifacts=$(echo "$artifacts_json" | jq -r --arg version "_mac$authenticator_version" '.artifacts[] | select(.name | endswith($version) or endswith("_" + $version) or endswith("_mac" + $version) or endswith("mac" + $version)) | .id' | head -n 1)
                 if [ -z "$matchingArtifacts" ]; then
                   echo "No matching artifact found for version $authenticator_version"
                   exit 1
@@ -209,7 +209,7 @@ jobs:
           userserver_version=${{ env.userserver_version }}
           userserver_version_lower=$(echo "$userserver_version" | tr '[:upper:]' '[:lower:]')
 
-          if [ "$userserver_version_lower" == "latest" ]; then
+          if [ "$userserver_version_lower" == "latest" then
             echo "Fetching the latest release..."
             response=$(curl -s -w "\n%{http_code}" -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" "https://api.github.com/repos/proshkin/SkedaiUserServer/releases/latest")
           else
@@ -229,7 +229,7 @@ jobs:
             echo "Artifacts HTTP Status: $artifacts_http_status"
             
             if [ "$artifacts_http_status" == "200" ]; then
-              matchingArtifacts=$(echo "$artifacts_json" | jq -r --arg version "_mac$userserver_version" '.artifacts[] | select(.name | endswith($version) or endswith("_" + $version)) | .id' | head -n 1)
+              matchingArtifacts=$(echo "$artifacts_json" | jq -r --arg version "_mac$userserver_version" '.artifacts[] | select(.name | endswith($version) or endswith("_" + $version) or endswith("_mac" + $version) or endswith("mac" + $version)) | .id' | head -n 1)
               if [ -z "$matchingArtifacts" ]; then
                 echo "No matching artifact found for version $userserver_version"
                 exit 1
@@ -264,7 +264,7 @@ jobs:
               echo "Artifacts HTTP Status: $artifacts_http_status"
               
               if [ "$artifacts_http_status" == "200" ]; then
-                matchingArtifacts=$(echo "$artifacts_json" | jq -r --arg version "_mac$userserver_version" '.artifacts[] | select(.name | endswith($version) or endswith("_" + $version)) | .id' | head -n 1)
+                matchingArtifacts=$(echo "$artifacts_json" | jq -r --arg version "_mac$userserver_version" '.artifacts[] | select(.name | endswith($version) or endswith("_" + $version) or endswith("_mac" + $version) or endswith("mac" + $version)) | .id' | head -n 1)
                 if [ -z "$matchingArtifacts" ]; then
                   echo "No matching artifact found for version $userserver_version"
                   exit 1
