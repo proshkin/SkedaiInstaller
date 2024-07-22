@@ -175,15 +175,26 @@ jobs:
                 exit 1
               fi
               download_url="https://api.github.com/repos/proshkin/SkedaiUserServer/actions/artifacts/$matchingArtifacts/zip"
+              echo "Download URL: $download_url"
+              curl -L -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" -o artifact.zip "$download_url"
+              artifactDir="components"
+              mkdir -p $artifactDir
+              unzip -q artifact.zip -d $artifactDir
+
+              exePattern="userServer_mac"
+              exeFile=$(find $artifactDir -name "$exePattern" | head -n 1)
+              if [ -n "$exeFile" ]; then
+                mv "$exeFile" "$artifactDir/userServer_mac"
+              else
+                echo "No executable file matching the pattern '$exePattern' found in the extracted artifacts."
+                exit 1
+              fi
             else
               echo "Failed to fetch artifacts. HTTP Status: $artifacts_http_status"
               exit 1
             fi
           else
             echo "Release found. Checking assets..."
-            echo "Release JSON Response: $json_response"
-            echo "User Server Version: $userserver_version"
-            echo "Expected match: mac_${userserver_version}"
             download_url=$(echo "$json_response" | jq -r --arg version "mac_${userserver_version}" '.assets[] | select(.name | endswith($version)).browser_download_url')
             if [ -z "$download_url" ]; then
               echo "No macOS asset found in the release. Looking for artifact instead."
@@ -199,26 +210,28 @@ jobs:
                   exit 1
                 fi
                 download_url="https://api.github.com/repos/proshkin/SkedaiUserServer/actions/artifacts/$matchingArtifacts/zip"
+                echo "Download URL: $download_url"
+                curl -L -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" -o artifact.zip "$download_url"
+                artifactDir="components"
+                mkdir -p $artifactDir
+                unzip -q artifact.zip -d $artifactDir
+
+                exePattern="userServer_mac"
+                exeFile=$(find $artifactDir -name "$exePattern" | head -n 1)
+                if [ -n "$exeFile" ]; then
+                  mv "$exeFile" "$artifactDir/userServer_mac"
+                else
+                  echo "No executable file matching the pattern '$exePattern' found in the extracted artifacts."
+                  exit 1
+                fi
               else
                 echo "Failed to fetch artifacts. HTTP Status: $artifacts_http_status"
                 exit 1
               fi
+            else
+              echo "Download URL: $download_url"
+              curl -L -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" -o components/userServer_mac "$download_url"
             fi
-          fi
-
-          echo "Download URL: $download_url"
-          curl -L -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" -o artifact.zip "$download_url"
-          artifactDir="components"
-          mkdir -p $artifactDir
-          unzip -q artifact.zip -d $artifactDir
-
-          exePattern="userServer_mac"
-          exeFile=$(find $artifactDir -name "$exePattern" | head -n 1)
-          if [ -n "$exeFile" ]; then
-            mv "$exeFile" "$artifactDir/userServer_mac"
-          else
-            echo "No executable file matching the pattern '$exePattern' found in the extracted artifacts."
-            exit 1
           fi
         shell: bash
 
