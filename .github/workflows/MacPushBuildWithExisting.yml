@@ -57,10 +57,10 @@ jobs:
               mkdir -p $artifactDir
               unzip -q artifact.zip -d $artifactDir
 
-              exePattern="skedaisatrunner_mac"
+              exePattern="skedaiSatRunner_mac"
               exeFile=$(find $artifactDir -name "$exePattern" | head -n 1)
               if [ -n "$exeFile" ]; then
-                mv "$exeFile" "$artifactDir/skedaisatrunner_mac"
+                mv "$exeFile" "$artifactDir/skedaiSatRunner_mac"
               else
                 echo "No executable file matching the pattern '$exePattern' found in the extracted artifacts."
                 exit 1
@@ -92,10 +92,10 @@ jobs:
                 mkdir -p $artifactDir
                 unzip -q artifact.zip -d $artifactDir
 
-                exePattern="skedaisatrunner_mac"
+                exePattern="skedaiSatRunner_mac"
                 exeFile=$(find $artifactDir -name "$exePattern" | head -n 1)
                 if [ -n "$exeFile" ]; then
-                  mv "$exeFile" "$artifactDir/skedaisatrunner_mac"
+                  mv "$exeFile" "$artifactDir/skedaiSatRunner_mac"
                 else
                   echo "No executable file matching the pattern '$exePattern' found in the extracted artifacts."
                   exit 1
@@ -106,7 +106,7 @@ jobs:
               fi
             else
               echo "Download URL: $download_url"
-              curl -L -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" -o components/skedaisatrunner_mac "$download_url"
+              curl -L -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" -o components/skedaiSatRunner_mac "$download_url"
             fi
           fi
         shell: bash
@@ -300,7 +300,7 @@ jobs:
         run: |
           mkdir -p $GITHUB_WORKSPACE/pkgroot/usr/local/bin
           mv components/userServer_mac $GITHUB_WORKSPACE/pkgroot/usr/local/bin/
-          mv components/skedaisatrunner $GITHUB_WORKSPACE/pkgroot/usr/local/bin/
+          mv components/skedaiSatRunner $GITHUB_WORKSPACE/pkgroot/usr/local/bin/
           mv components/authenticator $GITHUB_WORKSPACE/pkgroot/usr/local/bin/
 
       - name: Create plist file for service
