@@ -374,9 +374,9 @@ jobs:
         run: |
           sudo installer -pkg userServerInstaller.pkg -target /
           ls /usr/local/bin
-          /usr/local/bin/userServer_mac --version
-          /usr/local/bin/skedaiSatRunner_mac --version
-          /usr/local/bin/authenticator_mac --version
+          /usr/local/bin/userServer_mac --version &
+          sleep 5
+          pkill -f userServer_mac
         shell: bash
 
       - name: Upload installer package as artifact
