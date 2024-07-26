@@ -346,6 +346,12 @@ jobs:
           mv components/skedaiSatRunner_mac $GITHUB_WORKSPACE/pkgroot/usr/local/bin/
           mv components/authenticator_mac $GITHUB_WORKSPACE/pkgroot/usr/local/bin/
 
+      - name: Set executable permissions
+        run: |
+          chmod +x $GITHUB_WORKSPACE/pkgroot/usr/local/bin/userServer_mac
+          chmod +x $GITHUB_WORKSPACE/pkgroot/usr/local/bin/skedaiSatRunner_mac
+          chmod +x $GITHUB_WORKSPACE/pkgroot/usr/local/bin/authenticator_mac
+
       - name: Create plist file for service
         run: |
           mkdir -p $GITHUB_WORKSPACE/pkgroot/Library/LaunchAgents
