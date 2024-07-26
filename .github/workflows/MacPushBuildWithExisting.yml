@@ -364,17 +364,17 @@ jobs:
                   --install-location / \
                   userServerInstaller.pkg
 
-      - name: Upload installer package as artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: userServerInstaller_mac${{ env.build_version }}
-          path: userServerInstaller.pkg
-
       - name: Test the installer
         run: |
-          installer -pkg userServerInstaller.pkg -target /
+          sudo installer -pkg userServerInstaller.pkg -target /
           ls /usr/local/bin
           /usr/local/bin/userServer_mac --version
           /usr/local/bin/skedaiSatRunner_mac --version
           /usr/local/bin/authenticator_mac --version
         shell: bash
+
+      - name: Upload installer package as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: userServerInstaller_mac${{ env.build_version }}
+          path: userServerInstaller.pkg
