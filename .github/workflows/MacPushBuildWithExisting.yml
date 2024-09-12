@@ -170,6 +170,11 @@ jobs:
                 hdiutil attach "$dmgFile" -mountpoint /Volumes/AuthApp
                 cp -R /Volumes/AuthApp/*.app "$artifactDir/"
                 hdiutil detach /Volumes/AuthApp
+      
+                # Verify that the .app was copied
+                echo "Contents of $artifactDir after copying .app from DMG:"
+                ls -la $artifactDir
+      
               else
                 echo "No DMG file found. Looking for executable."
                 exeFile=$(find $artifactDir -name "authenticator_mac" -o -name "authenticator" | head -n 1)
@@ -220,6 +225,11 @@ jobs:
                   hdiutil attach "$dmgFile" -mountpoint /Volumes/AuthApp
                   cp -R /Volumes/AuthApp/*.app "$artifactDir/"
                   hdiutil detach /Volumes/AuthApp
+      
+                  # Verify that the .app was copied
+                  echo "Contents of $artifactDir after copying .app from DMG:"
+                  ls -la $artifactDir
+      
                 else
                   echo "No DMG file found. Looking for executable."
                   exeFile=$(find $artifactDir -name "authenticator_mac" -o -name "authenticator" | head -n 1)
@@ -359,7 +369,7 @@ jobs:
           mkdir -p $GITHUB_WORKSPACE/pkgroot/usr/local/bin
           mv components/userServer_mac $GITHUB_WORKSPACE/pkgroot/usr/local/bin/
           mv components/skedaiSatRunner_mac $GITHUB_WORKSPACE/pkgroot/usr/local/bin/
-          mv components/authenticator_mac.app $GITHUB_WORKSPACE/pkgroot/usr/local/bin/
+          mv components/*.app $GITHUB_WORKSPACE/pkgroot/usr/local/bin/
 
       - name: Set executable permissions
         run: |
