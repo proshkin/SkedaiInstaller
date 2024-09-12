@@ -130,7 +130,7 @@ jobs:
         run: |
           authenticator_version=${{ env.authenticator_version }}
           authenticator_version_lower=$(echo "$authenticator_version" | tr '[:upper:]' '[:lower:]')
-
+      
           if [ "$authenticator_version_lower" == "latest" ]; then
             echo "Fetching the latest release..."
             response=$(curl -s -w "\n%{http_code}" -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" "https://api.github.com/repos/proshkin/SkedaiAuthenticator/releases/latest")
@@ -138,18 +138,18 @@ jobs:
             echo "Fetching release for version $authenticator_version..."
             response=$(curl -s -w "\n%{http_code}" -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" "https://api.github.com/repos/proshkin/SkedaiAuthenticator/releases/tags/$authenticator_version")
           fi
-
+      
           http_status=$(echo "$response" | tail -n1)
           json_response=$(echo "$response" | sed '$d')
           echo "HTTP Status: $http_status"
-
+      
           if [ "$http_status" != "200" ]; then
             echo "Release not found, looking for artifact"
             artifacts_response=$(curl -s -w "\n%{http_code}" -H "Authorization: token ${{ secrets.SKEDAI_ACTION_TOKEN }}" "https://api.github.com/repos/proshkin/SkedaiAuthenticator/actions/artifacts")
             artifacts_http_status=$(echo "$artifacts_response" | tail -n1)
             artifacts_json=$(echo "$artifacts_response" | sed '$d')
             echo "Artifacts HTTP Status: $artifacts_http_status"
-
+      
             if [ "$artifacts_http_status" == "200" ]; then
               matchingArtifacts=$(echo "$artifacts_json" | jq -r --arg version "_mac$authenticator_version" --arg version2 "_mac_$authenticator_version" '.artifacts[] | select(.name | endswith($version) or endswith($version2)) | .id' | head -n 1)
               if [ -z "$matchingArtifacts" ]; then
@@ -162,21 +162,31 @@ jobs:
               artifactDir="components"
               mkdir -p $artifactDir
               unzip -q artifact.zip -d $artifactDir
-
+      
               exePattern1="authenticator_mac"
               exePattern2="authenticator"
-              exeFile=$(find $artifactDir -name "$exePattern1" -o -name "$exePattern2" | head -n 1)
-              if [ -n "$exeFile" ]; then
-                if [[ "$exeFile" != *"_mac" ]]; then
-                  mv "$exeFile" "${exeFile}_mac"
-                  exeFile="${exeFile}_mac"
-                fi
-                mv "$exeFile" "$artifactDir/authenticator_mac"
+              dmgFile=$(find $artifactDir -name "*.dmg" | head -n 1)
+      
+              if [ -n "$dmgFile" ]; then
+                echo "Found DMG file: $dmgFile"
+                hdiutil attach "$dmgFile" -mountpoint /Volumes/AuthApp
+                cp -R /Volumes/AuthApp/*.app "$artifactDir/"
+                hdiutil detach /Volumes/AuthApp
               else
-                echo "No executable file matching the pattern '$exePattern1' or '$exePattern2' found in the extracted artifacts."
-                echo "Files found in artifact directory:"
-                find $artifactDir -type f
-                exit 1
+                echo "No DMG file found. Looking for executable."
+                exeFile=$(find $artifactDir -name "$exePattern1" -o -name "$exePattern2" | head -n 1)
+                if [ -n "$exeFile" ]; then
+                  if [[ "$exeFile" != *"_mac" ]]; then
+                    mv "$exeFile" "${exeFile}_mac"
+                    exeFile="${exeFile}_mac"
+                  fi
+                  mv "$exeFile" "$artifactDir/authenticator_mac"
+                else
+                  echo "No executable file matching the pattern '$exePattern1' or '$exePattern2' found in the extracted artifacts."
+                  echo "Files found in artifact directory:"
+                  find $artifactDir -type f
+                  exit 1
+                fi
               fi
             else
               echo "Failed to fetch artifacts. HTTP Status: $artifacts_http_status"
@@ -191,7 +201,7 @@ jobs:
               artifacts_http_status=$(echo "$artifacts_response" | tail -n1)
               artifacts_json=$(echo "$artifacts_response" | sed '$d')
               echo "Artifacts HTTP Status: $artifacts_http_status"
-
+      
               if [ "$artifacts_http_status" == "200" ]; then
                 matchingArtifacts=$(echo "$artifacts_json" | jq -r --arg version "_mac$authenticator_version" --arg version2 "_mac_$authenticator_version" '.artifacts[] | select(.name | endswith($version) or endswith($version2)) | .id' | head -n 1)
                 if [ -z "$matchingArtifacts" ]; then
@@ -204,21 +214,31 @@ jobs:
                 artifactDir="components"
                 mkdir -p $artifactDir
                 unzip -q artifact.zip -d $artifactDir
-
+      
                 exePattern1="authenticator_mac"
                 exePattern2="authenticator"
-                exeFile=$(find $artifactDir -name "$exePattern1" -o -name "$exePattern2" | head -n 1)
-                if [ -n "$exeFile" ]; then
-                  if [[ "$exeFile" != *"_mac" ]]; then
-                    mv "$exeFile" "${exeFile}_mac"
-                    exeFile="${exeFile}_mac"
-                  fi
-                  mv "$exeFile" "$artifactDir/authenticator_mac"
+                dmgFile=$(find $artifactDir -name "*.dmg" | head -n 1)
+      
+                if [ -n "$dmgFile" ]; then
+                  echo "Found DMG file: $dmgFile"
+                  hdiutil attach "$dmgFile" -mountpoint /Volumes/AuthApp
+                  cp -R /Volumes/AuthApp/*.app "$artifactDir/"
+                  hdiutil detach /Volumes/AuthApp
                 else
-                  echo "No executable file matching the pattern '$exePattern1' or '$exePattern2' found in the extracted artifacts."
-                  echo "Files found in artifact directory:"
-                  find $artifactDir -type f
-                  exit 1
+                  echo "No DMG file found. Looking for executable."
+                  exeFile=$(find $artifactDir -name "$exePattern1" -o -name "$exePattern2" | head -n 1)
+                  if [ -n "$exeFile" ]; then
+                    if [[ "$exeFile" != *"_mac" ]]; then
+                      mv "$exeFile" "${exeFile}_mac"
+                      exeFile="${exeFile}_mac"
+                    fi
+                    mv "$exeFile" "$artifactDir/authenticator_mac"
+                  else
+                    echo "No executable file matching the pattern '$exePattern1' or '$exePattern2' found in the extracted artifacts."
+                    echo "Files found in artifact directory:"
+                    find $artifactDir -type f
+                    exit 1
+                  fi
                 fi
               else
                 echo "Failed to fetch artifacts. HTTP Status: $artifacts_http_status"
