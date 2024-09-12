@@ -362,6 +362,12 @@ jobs:
         run: |
           mkdir -p $GITHUB_WORKSPACE/pkgroot/usr/local/var/log
 
+      - name: Include preinstall script
+        run: |
+          mkdir -p $GITHUB_WORKSPACE/pkgroot/Library/Scripts
+          cp preinstall.sh $GITHUB_WORKSPACE/pkgroot/Library/Scripts/preinstall
+          chmod +x $GITHUB_WORKSPACE/pkgroot/Library/Scripts/preinstall
+
       - name: Build the installer package
         run: |
           pkgbuild --root $GITHUB_WORKSPACE/pkgroot \
