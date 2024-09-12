@@ -163,8 +163,6 @@ jobs:
               mkdir -p $artifactDir
               unzip -q artifact.zip -d $artifactDir
       
-              exePattern1="authenticator_mac"
-              exePattern2="authenticator"
               dmgFile=$(find $artifactDir -name "*.dmg" | head -n 1)
       
               if [ -n "$dmgFile" ]; then
@@ -174,7 +172,7 @@ jobs:
                 hdiutil detach /Volumes/AuthApp
               else
                 echo "No DMG file found. Looking for executable."
-                exeFile=$(find $artifactDir -name "$exePattern1" -o -name "$exePattern2" | head -n 1)
+                exeFile=$(find $artifactDir -name "authenticator_mac" -o -name "authenticator" | head -n 1)
                 if [ -n "$exeFile" ]; then
                   if [[ "$exeFile" != *"_mac" ]]; then
                     mv "$exeFile" "${exeFile}_mac"
@@ -182,7 +180,7 @@ jobs:
                   fi
                   mv "$exeFile" "$artifactDir/authenticator_mac"
                 else
-                  echo "No executable file matching the pattern '$exePattern1' or '$exePattern2' found in the extracted artifacts."
+                  echo "No executable file matching the pattern found in the extracted artifacts."
                   echo "Files found in artifact directory:"
                   find $artifactDir -type f
                   exit 1
@@ -215,8 +213,6 @@ jobs:
                 mkdir -p $artifactDir
                 unzip -q artifact.zip -d $artifactDir
       
-                exePattern1="authenticator_mac"
-                exePattern2="authenticator"
                 dmgFile=$(find $artifactDir -name "*.dmg" | head -n 1)
       
                 if [ -n "$dmgFile" ]; then
@@ -226,7 +222,7 @@ jobs:
                   hdiutil detach /Volumes/AuthApp
                 else
                   echo "No DMG file found. Looking for executable."
-                  exeFile=$(find $artifactDir -name "$exePattern1" -o -name "$exePattern2" | head -n 1)
+                  exeFile=$(find $artifactDir -name "authenticator_mac" -o -name "authenticator" | head -n 1)
                   if [ -n "$exeFile" ]; then
                     if [[ "$exeFile" != *"_mac" ]]; then
                       mv "$exeFile" "${exeFile}_mac"
@@ -234,7 +230,7 @@ jobs:
                     fi
                     mv "$exeFile" "$artifactDir/authenticator_mac"
                   else
-                    echo "No executable file matching the pattern '$exePattern1' or '$exePattern2' found in the extracted artifacts."
+                    echo "No executable file matching the pattern found in the extracted artifacts."
                     echo "Files found in artifact directory:"
                     find $artifactDir -type f
                     exit 1
@@ -250,8 +246,7 @@ jobs:
             fi
           fi
         shell: bash
-
-
+  
       - name: Get UserServer using version number
         id: download-userserver
         run: |
@@ -364,7 +359,7 @@ jobs:
           mkdir -p $GITHUB_WORKSPACE/pkgroot/usr/local/bin
           mv components/userServer_mac $GITHUB_WORKSPACE/pkgroot/usr/local/bin/
           mv components/skedaiSatRunner_mac $GITHUB_WORKSPACE/pkgroot/usr/local/bin/
-          mv components/authenticator_mac $GITHUB_WORKSPACE/pkgroot/usr/local/bin/
+          mv components/authenticator_mac.app $GITHUB_WORKSPACE/pkgroot/usr/local/bin/
 
       - name: Set executable permissions
         run: |
