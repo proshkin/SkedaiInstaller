@@ -168,12 +168,19 @@ jobs:
               if [ -n "$dmgFile" ]; then
                 echo "Found DMG file: $dmgFile"
                 hdiutil attach "$dmgFile" -mountpoint /Volumes/AuthApp
-                cp -R /Volumes/AuthApp/*.app "$artifactDir/"
+                cp -R /Volumes/AuthApp/*.app "$artifactDir/authenticator_mac.app"
                 hdiutil detach /Volumes/AuthApp
       
                 # Verify that the .app was copied
                 echo "Contents of $artifactDir after copying .app from DMG:"
                 ls -la $artifactDir
+      
+                if [ -d "$artifactDir/authenticator_mac.app" ]; then
+                  echo "Successfully copied authenticator_mac.app"
+                else
+                  echo "Error: Failed to copy authenticator_mac.app"
+                  exit 1
+                fi
       
               else
                 echo "No DMG file found. Looking for executable."
@@ -223,12 +230,19 @@ jobs:
                 if [ -n "$dmgFile" ]; then
                   echo "Found DMG file: $dmgFile"
                   hdiutil attach "$dmgFile" -mountpoint /Volumes/AuthApp
-                  cp -R /Volumes/AuthApp/*.app "$artifactDir/"
+                  cp -R /Volumes/AuthApp/*.app "$artifactDir/authenticator_mac.app"
                   hdiutil detach /Volumes/AuthApp
       
                   # Verify that the .app was copied
                   echo "Contents of $artifactDir after copying .app from DMG:"
                   ls -la $artifactDir
+      
+                  if [ -d "$artifactDir/authenticator_mac.app" ]; then
+                    echo "Successfully copied authenticator_mac.app"
+                  else
+                    echo "Error: Failed to copy authenticator_mac.app"
+                    exit 1
+                  fi
       
                 else
                   echo "No DMG file found. Looking for executable."
@@ -370,7 +384,7 @@ jobs:
           mv components/userServer_mac $GITHUB_WORKSPACE/pkgroot/usr/local/bin/
           mv components/skedaiSatRunner_mac $GITHUB_WORKSPACE/pkgroot/usr/local/bin/
           mv components/authenticator_mac.app $GITHUB_WORKSPACE/pkgroot/usr/local/bin/
-
+      
       - name: Set executable permissions
         run: |
           chmod +x $GITHUB_WORKSPACE/pkgroot/usr/local/bin/userServer_mac
