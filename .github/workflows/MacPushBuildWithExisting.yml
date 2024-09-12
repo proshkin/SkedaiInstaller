@@ -369,13 +369,19 @@ jobs:
           mkdir -p $GITHUB_WORKSPACE/pkgroot/usr/local/bin
           mv components/userServer_mac $GITHUB_WORKSPACE/pkgroot/usr/local/bin/
           mv components/skedaiSatRunner_mac $GITHUB_WORKSPACE/pkgroot/usr/local/bin/
-          mv components/*.app $GITHUB_WORKSPACE/pkgroot/usr/local/bin/
+          mv components/authenticator_mac.app $GITHUB_WORKSPACE/pkgroot/usr/local/bin/
 
       - name: Set executable permissions
         run: |
           chmod +x $GITHUB_WORKSPACE/pkgroot/usr/local/bin/userServer_mac
           chmod +x $GITHUB_WORKSPACE/pkgroot/usr/local/bin/skedaiSatRunner_mac
-          chmod +x $GITHUB_WORKSPACE/pkgroot/usr/local/bin/authenticator_mac.app/Contents/MacOS/*
+          # Check if .app directory exists before applying permissions
+          if [ -d "$GITHUB_WORKSPACE/pkgroot/usr/local/bin/authenticator_mac.app" ]; then
+            chmod +x $GITHUB_WORKSPACE/pkgroot/usr/local/bin/authenticator_mac.app/Contents/MacOS/*
+          else
+            echo "Error: authenticator_mac.app not found in the expected location."
+            exit 1
+          fi
 
       - name: Create plist file for service
         run: |
