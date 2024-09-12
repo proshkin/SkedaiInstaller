@@ -375,12 +375,12 @@ jobs:
         run: |
           chmod +x $GITHUB_WORKSPACE/pkgroot/usr/local/bin/userServer_mac
           chmod +x $GITHUB_WORKSPACE/pkgroot/usr/local/bin/skedaiSatRunner_mac
-          chmod +x $GITHUB_WORKSPACE/pkgroot/usr/local/bin/authenticator_mac
+          chmod +x $GITHUB_WORKSPACE/pkgroot/usr/local/bin/authenticator_mac.app/Contents/MacOS/*
 
       - name: Create plist file for service
         run: |
           mkdir -p $GITHUB_WORKSPACE/pkgroot/Library/LaunchAgents
-          plistContent='<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">\n<plist version="1.0">\n  <dict>\n    <key>Label</key>\n    <string>com.aitkn.skedaiuserserver</string>\n    <key>ProgramArguments</key>\n    <array>\n      <string>/usr/local/bin/userServer_mac</string>\n    </array>\n    <key>RunAtLoad</key>\n    <true/>\n    <key>KeepAlive</key>\n    <true/>\n    <key>StandardErrorPath</key>\n    <string>/usr/local/var/log/userserver.err</string>\n    <key>StandardOutPath</key>\n    <string>/usr/local/var/log/userserver.out</string>\n  </dict>\n</plist>'
+          plistContent='<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">\n<plist version="1.0">\n  <dict>\n    <key>Label</key>\n    <string>com.aitkn.skedaiuserserver</string>\n    <key>ProgramArguments</key>\n    <array>\n      <string>/usr/local/bin/authenticator_mac.app/Contents/MacOS/authenticator</string>\n      <string>/usr/local/bin/userServer_mac</string>\n    </array>\n    <key>RunAtLoad</key>\n    <true/>\n    <key>KeepAlive</key>\n    <true/>\n    <key>StandardErrorPath</key>\n    <string>/usr/local/var/log/userserver.err</string>\n    <key>StandardOutPath</key>\n    <string>/usr/local/var/log/userserver.out</string>\n  </dict>\n</plist>'
           echo -e "$plistContent" > $GITHUB_WORKSPACE/pkgroot/Library/LaunchAgents/com.aitkn.skedaiuserserver.plist
 
       - name: Create log directory
