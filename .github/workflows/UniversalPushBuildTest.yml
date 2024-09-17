@@ -1,0 +1,218 @@
+name: Build Installer
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [macos-latest, windows-latest]
+        platform: [mac, win]
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Install Dependencies
+      run: |
+        if [ "${{ runner.os }}" == "Windows" ]; then
+          choco install -y jq
+        else
+          brew install jq
+        fi
+
+    - name: Read Config File
+      id: read_config
+      shell: bash
+      run: |
+        echo "Reading config.txt"
+        CONFIG_CONTENT=$(cat config.txt)
+        IS_RELEASE=$(echo "$CONFIG_CONTENT" | jq -r '.is_release')
+        IS_PRERELEASE=$(echo "$CONFIG_CONTENT" | jq -r '.is_prerelease')
+        SKEDAISATRUNNER_VERSION=$(echo "$CONFIG_CONTENT" | jq -r '.skedaisatrunner_version')
+        AUTHENTICATOR_VERSION=$(echo "$CONFIG_CONTENT" | jq -r '.authenticator_version')
+        USERSERVER_VERSION=$(echo "$CONFIG_CONTENT" | jq -r '.userserver_version')
+        BUILD_VERSION=$(echo "$CONFIG_CONTENT" | jq -r '.build_version')
+        echo "::set-output name=is_release::$IS_RELEASE"
+        echo "::set-output name=is_prerelease::$IS_PRERELEASE"
+        echo "::set-output name=skedaisatrunner_version::$SKEDAISATRUNNER_VERSION"
+        echo "::set-output name=authenticator_version::$AUTHENTICATOR_VERSION"
+        echo "::set-output name=userserver_version::$USERSERVER_VERSION"
+        echo "::set-output name=build_version::$BUILD_VERSION"
+
+    - name: Install GitHub CLI
+      uses: actions/setup-gh@v2
+
+    - name: Authenticate GitHub CLI
+      run: gh auth setup-git
+
+    - name: Download Components
+      shell: bash
+      env:
+        IS_RELEASE: ${{ steps.read_config.outputs.is_release }}
+        IS_PRERELEASE: ${{ steps.read_config.outputs.is_prerelease }}
+        SKEDAISATRUNNER_VERSION: ${{ steps.read_config.outputs.skedaisatrunner_version }}
+        AUTHENTICATOR_VERSION: ${{ steps.read_config.outputs.authenticator_version }}
+        USERSERVER_VERSION: ${{ steps.read_config.outputs.userserver_version }}
+        BUILD_VERSION: ${{ steps.read_config.outputs.build_version }}
+        PLATFORM: ${{ matrix.platform }}
+      run: |
+        set -e
+
+        mkdir -p components
+
+        download_component() {
+          REPO=$1
+          COMPONENT_NAME=$2
+          VERSION=$3
+          PLATFORM=$4
+          echo "Downloading $COMPONENT_NAME version $VERSION for platform $PLATFORM"
+
+          if [ "$PLATFORM" == "win" ]; then
+            ASSET_FILE="${COMPONENT_NAME}_${PLATFORM}_${VERSION}.exe"
+          elif [ "$PLATFORM" == "mac" ]; then
+            ASSET_FILE="${COMPONENT_NAME}_${PLATFORM}_${VERSION}.zip"
+          else
+            echo "Unknown platform: $PLATFORM"
+            exit 1
+          fi
+
+          RELEASE_URL="https://github.com/proshkin/${REPO}/releases/download/v${VERSION}/${ASSET_FILE}"
+
+          # Try to download from release
+          echo "Trying to download from release: $RELEASE_URL"
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$RELEASE_URL")
+          if [ "$HTTP_STATUS" == "200" ]; then
+            curl -L -o "components/$ASSET_FILE" "$RELEASE_URL"
+            echo "$COMPONENT_NAME downloaded from release."
+
+            # Extract if necessary
+            if [ "$PLATFORM" == "mac" ]; then
+              unzip -o "components/$ASSET_FILE" -d "components/"
+              rm "components/$ASSET_FILE"
+            fi
+            return 0
+          else
+            echo "Release asset not found for $COMPONENT_NAME. Trying to download artifact."
+
+            # Use gh CLI to list runs and artifacts
+            RUN_ID=$(gh run list -R proshkin/${REPO} --branch main --json databaseId,headBranch,status,conclusion -q '.[] | select(.headBranch=="main" and .status=="completed" and .conclusion=="success") | .databaseId' | head -n 1)
+            if [ -z "$RUN_ID" ]; then
+              echo "No successful workflow runs found for $COMPONENT_NAME"
+              return 1
+            fi
+
+            echo "Found run ID $RUN_ID for $COMPONENT_NAME"
+
+            # Download artifacts list
+            ARTIFACT_NAME="${COMPONENT_NAME}_${PLATFORM}_${VERSION}"
+            gh run download $RUN_ID -R proshkin/${REPO} -n "$ARTIFACT_NAME" -D components
+            if [ -f "components/$ASSET_FILE" ] || [ -f "components/${COMPONENT_NAME}.exe" ] || [ -f "components/${COMPONENT_NAME}" ]; then
+              echo "$COMPONENT_NAME downloaded from artifact."
+              return 0
+            else
+              echo "No matching artifact found for $COMPONENT_NAME"
+              return 1
+            fi
+          fi
+        }
+
+        # Download userServer
+        if ! download_component "SkedaiUserServer" "userServer" "$USERSERVER_VERSION" "$PLATFORM"; then
+          echo "Failed to download userServer"
+          exit 1
+        fi
+
+        # Download authenticator
+        if ! download_component "SkedaiAuthenticator" "authenticator" "$AUTHENTICATOR_VERSION" "$PLATFORM"; then
+          echo "Failed to download authenticator"
+          exit 1
+        fi
+
+        # Download sat_runner
+        if ! download_component "SkedaiSatRunner" "sat_runner" "$SKEDAISATRUNNER_VERSION" "$PLATFORM"; then
+          echo "Failed to download sat_runner"
+          exit 1
+        fi
+
+    - name: Build Installer
+      shell: bash
+      env:
+        BUILD_VERSION: ${{ steps.read_config.outputs.build_version }}
+        PLATFORM: ${{ matrix.platform }}
+      run: |
+        set -e
+        echo "Building installer for platform $PLATFORM"
+
+        if [ "$PLATFORM" == "win" ]; then
+          echo "Building installer for Windows"
+
+          # Install Inno Setup
+          choco install innosetup -y
+
+          # Create an Inno Setup script
+          cat <<EOT > installer.iss
+[Setup]
+AppName=SkedaiUserServer
+AppVersion=${BUILD_VERSION}
+DefaultDirName={pf}\\SkedaiUserServer
+DefaultGroupName=SkedaiUserServer
+OutputDir=Output
+OutputBaseFilename=installer_${PLATFORM}_${BUILD_VERSION}
+Compression=lzma
+SolidCompression=yes
+
+[Files]
+Source: "components\\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs
+
+[Run]
+Filename: "{app}\\userServer.exe"; Description: "Launch Skedai User Server"; Flags: nowait postinstall skipifsilent
+
+EOT
+
+          # Build the installer
+          "C:\\Program Files (x86)\\Inno Setup 6\\ISCC.exe" installer.iss
+
+          # The output installer will be in the Output directory
+          INSTALLER_PATH="Output/installer_${PLATFORM}_${BUILD_VERSION}.exe"
+
+        elif [ "$PLATFORM" == "mac" ]; then
+          echo "Building installer for Mac"
+
+          # Create version.txt
+          echo "${BUILD_VERSION}" > components/version.txt
+
+          # Create a .pkg installer using pkgbuild
+          pkgbuild --root components --identifier com.skedai.userserver --version ${BUILD_VERSION} --install-location /Applications/SkedaiUserServer components/SkedaiUserServer.pkg
+
+          INSTALLER_PATH="components/SkedaiUserServer.pkg"
+        else
+          echo "Unknown platform: $PLATFORM"
+          exit 1
+        fi
+
+    - name: Upload Artifact
+      if: ${{ steps.read_config.outputs.is_release }} == 'false'
+      uses: actions/upload-artifact@v3
+      with:
+        name: installer_${{ matrix.platform }}_${{ steps.read_config.outputs.build_version }}
+        path: ${{ env.INSTALLER_PATH }}
+
+    - name: Create Release
+      if: ${{ steps.read_config.outputs.is_release }} == 'true'
+      id: create_release
+      uses: actions/create-release@v1
+      with:
+        tag_name: v${{ steps.read_config.outputs.build_version }}
+        release_name: Installer v${{ steps.read_config.outputs.build_version }}
+        prerelease: ${{ steps.read_config.outputs.is_prerelease }}
+        draft: false
+
+    - name: Upload Release Asset
+      if: ${{ steps.read_config.outputs.is_release }} == 'true'
+      uses: actions/upload-release-asset@v1
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ${{ env.INSTALLER_PATH }}
+        asset_name: installer_${{ matrix.platform }}_${{ steps.read_config.outputs.build_version }}.${{ matrix.platform == 'win' && 'exe' || 'pkg' }}
+        asset_content_type: application/octet-stream
